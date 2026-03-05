@@ -1456,6 +1456,10 @@ export class MainScene extends Phaser.Scene {
             
             const centerY = h / 2;
             const safeTop = isPortrait ? 10 : 12;
+            const shopBottomInset = isPortrait ? this.getBottomSystemInset() : 0;
+            const shopBottomReserve = isMobilePortrait
+                ? Phaser.Math.Clamp(72 + shopBottomInset, 72, 170)
+                : 12;
             const isShortLandscapeShop = !isPortrait && h <= 430;
             const spacing = isPortrait ? 12 : (isShortLandscapeShop ? 8 : 14);
             const actualCols = this.getShopGridCols(this.shopQty, isPortrait);
@@ -1465,20 +1469,19 @@ export class MainScene extends Phaser.Scene {
             const rows = Math.ceil(this.shopQty / actualCols);
             const gridW = (actualCols * 100) + ((actualCols - 1) * 10);
             const gridH = (rows * 140) + ((rows - 1) * 10);
-            const isDenseShopLayout = this.shopQty >= 15;
             const splitPortraitShopInfo = isPortrait && w >= 520;
             const isNarrowLandscapeShop = !isPortrait && w <= 1100;
             const landscapeShopShiftX = !isPortrait
                 ? (isNarrowLandscapeShop
                     ? shopLayoutWidth * 0.10
-                    : (isDenseShopLayout ? shopLayoutWidth * 0.06 : 0))
+                    : 0)
                 : 0;
             const leftScale = isPortrait
                 ? Phaser.Math.Clamp(shopLayoutWidth / 540, 0.78, 1.05)
                 : (isShortLandscapeShop
                     ? Phaser.Math.Clamp(Math.min(shopLayoutWidth * 0.38, h * 0.33) / 200, 0.62, 0.90)
                     : Phaser.Math.Clamp(Math.min(shopLayoutWidth * 0.42, h * 0.46) / 200, 0.82, 1.10));
-            const useCompactInfoScale = isDenseShopLayout || isNarrowLandscapeShop || splitPortraitShopInfo;
+            const useCompactInfoScale = isNarrowLandscapeShop || splitPortraitShopInfo;
             const rightScale = leftScale * (isShortLandscapeShop ? 0.68 : (useCompactInfoScale ? 0.78 : 1));
 
             if (this.shopTitlePaquetes) {
@@ -1542,7 +1545,7 @@ export class MainScene extends Phaser.Scene {
                 const topLeftYWorld = flowY + (topLeftTop * leftScale);
                 const topRightYOffset = isShortLandscapeShop ? 0 : (isNarrowLandscapeShop ? 8 : 0);
                 const topRightYWorld = flowY + ((topRightTop + topRightYOffset) * rightScale);
-                const rightPanelBase = isNarrowLandscapeShop ? 0.28 : (isDenseShopLayout ? 0.28 : 0.24);
+                const rightPanelBase = isNarrowLandscapeShop ? 0.28 : 0.24;
                 const rightPanelX = shopLayoutWidth * rightPanelBase;
                 this.shopTopLeft.setPosition((-shopLayoutWidth * 0.25) + landscapeShopShiftX, topLeftYWorld - centerY);
                 this.shopTopRight.setPosition(rightPanelX + landscapeShopShiftX, topRightYWorld - centerY);
@@ -1555,15 +1558,10 @@ export class MainScene extends Phaser.Scene {
                 flowY = controlsBottomYWorld + spacing;
             }
 
-            if (!isPortrait && isDenseShopLayout && !isShortLandscapeShop) {
-                // Da más aire entre controles superiores y la grilla cuando hay 15/20 tickets.
-                flowY += 20;
-            }
-
             const maxW = shopLayoutWidth * (isPortrait ? 0.95 : 0.98);
             const cardsTopPadding = isShortLandscapeShop ? 10 : 0;
             const cardsStartY = flowY + cardsTopPadding;
-            const maxH = Math.max(h - cardsStartY - 12, 20);
+            const maxH = Math.max(h - cardsStartY - shopBottomReserve, 20);
             const cardScaleCap = isShortLandscapeShop ? 1.08 : 1.2;
             const cardScaleRaw = Math.min(maxW / gridW, maxH / gridH, cardScaleCap);
             const cardScale = isShortLandscapeShop ? (cardScaleRaw * 0.92) : cardScaleRaw;
@@ -1573,7 +1571,7 @@ export class MainScene extends Phaser.Scene {
             if (isPortrait) {
                 const cardsCenterTarget = cardsStartY + (maxH * (isMobilePortrait ? 0.46 : 0.68));
                 const cardsCenterMin = cardsStartY + (cardsBlockHeight / 2);
-                const cardsCenterMax = h - 12 - (cardsBlockHeight / 2);
+                const cardsCenterMax = h - shopBottomReserve - (cardsBlockHeight / 2);
                 cardsYWorld = Phaser.Math.Clamp(cardsCenterTarget, cardsCenterMin, Math.max(cardsCenterMin, cardsCenterMax));
             } else {
                 cardsYWorld = cardsStartY + (cardsBlockHeight / 2);
@@ -1903,6 +1901,9 @@ export class MainScene extends Phaser.Scene {
                 if (this.layerGame && this.layerGame.visible) {
                     const boardBottom = this.layerGame.y + ((CONFIG_GAME.reelTotalHeight * this.layerGame.scaleY) / 2);
                     hudDockTop = Math.round(Phaser.Math.Clamp(boardBottom + 12, 8, maxTop));
+                } else if (this.layerShop && this.layerShop.visible) {
+                    // En tienda se ancla arriba para no tapar la grilla de tickets.
+                    hudDockTop = Math.round(Phaser.Math.Clamp(92, 8, maxTop));
                 } else if (this.layerLobby && this.layerLobby.visible && this.btnLobbyJugar) {
                     const playBottom = this.btnLobbyJugar.getBounds().bottom;
                     hudDockTop = Math.round(Phaser.Math.Clamp(playBottom + 12, 8, maxTop));
