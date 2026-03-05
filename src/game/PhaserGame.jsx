@@ -6,12 +6,25 @@ export default function PhaserGame() {
   const gameRef = useRef(null);
 
   useEffect(() => {
+    const getViewportSize = () => {
+      const vv = window.visualViewport;
+      if (vv && Number.isFinite(vv.width) && Number.isFinite(vv.height)) {
+        return {
+          w: Math.max(1, Math.round(vv.width)),
+          h: Math.max(1, Math.round(vv.height))
+        };
+      }
+      return {
+        w: Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1),
+        h: Math.max(1, window.innerHeight || document.documentElement.clientHeight || 1)
+      };
+    };
+
     const forceResize = () => {
       const game = gameRef.current;
       if (!game) return;
 
-      const w = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1);
-      const h = Math.max(1, window.innerHeight || document.documentElement.clientHeight || 1);
+      const { w, h } = getViewportSize();
       game.scale.resize(w, h);
       game.scale.refresh();
     };
@@ -41,12 +54,21 @@ export default function PhaserGame() {
         });
     }
 
+    const vv = window.visualViewport;
     window.addEventListener('resize', forceResize);
     window.addEventListener('orientationchange', handleOrientationChange);
+    if (vv) {
+      vv.addEventListener('resize', forceResize);
+      vv.addEventListener('scroll', forceResize);
+    }
 
     return () => {
       window.removeEventListener('resize', forceResize);
       window.removeEventListener('orientationchange', handleOrientationChange);
+      if (vv) {
+        vv.removeEventListener('resize', forceResize);
+        vv.removeEventListener('scroll', forceResize);
+      }
       if (gameRef.current) {
         gameRef.current.destroy(true);
         gameRef.current = null;

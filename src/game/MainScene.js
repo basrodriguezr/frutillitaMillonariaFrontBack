@@ -120,6 +120,15 @@ export class MainScene extends Phaser.Scene {
         return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
 
+    getBottomSystemInset() {
+        if (typeof window === 'undefined') return 0;
+        const vv = window.visualViewport;
+        if (!vv) return 0;
+        const rawInset = (window.innerHeight || this.scale.height || 0) - (vv.height + vv.offsetTop);
+        if (!Number.isFinite(rawInset)) return 0;
+        return Math.max(0, rawInset);
+    }
+
     generateTicketId() {
         return String(Phaser.Math.Between(1, 9999999)).padStart(7, '0');
     }
@@ -1641,23 +1650,6 @@ export class MainScene extends Phaser.Scene {
             const isCompactPortraitHud = w <= 720 || h <= 900;
             const isVeryCompactPortraitHud = w <= 460 || h <= 760;
             const isMidPortraitHud = w >= 722 && w <= 900;
-            const contWinY = isCompactPortraitHud
-                ? h * (isVeryCompactPortraitHud ? 0.64 : 0.66)
-                : h * (isMidPortraitHud ? 0.72 : 0.67);
-            const controlsY = isCompactPortraitHud
-                ? h * (isVeryCompactPortraitHud ? 0.80 : 0.82)
-                : h * (isMidPortraitHud ? 0.87 : 0.84);
-            const gameTop = (gameJackpot ? gameJackpot.bottom : (h * 0.10)) + 12;
-            const gameBottom = contWinY - 70;
-            const availableGameHeight = Math.max(190, gameBottom - gameTop);
-            const scaleGame = Math.min((w * (isMidPortraitHud ? 0.99 : 0.96)) / CONFIG_GAME.reelTotalWidth, availableGameHeight / CONFIG_GAME.reelTotalHeight);
-            const gameCenterY = gameTop + (availableGameHeight / 2);
-
-            this.layerGame.setPosition(w / 2, gameCenterY); 
-            this.layerGame.setScale(scaleGame);
-
-            this.replayTitleBox.setPosition(0, -CONFIG_GAME.reelTotalHeight/2 - 12);
-
             const infoScale = isCompactPortraitHud
                 ? Phaser.Math.Clamp(w / 760, 0.54, 0.72)
                 : Phaser.Math.Clamp(w / 420, 0.82, 0.96);
@@ -1666,6 +1658,45 @@ export class MainScene extends Phaser.Scene {
                     ? Phaser.Math.Clamp(w / 860, 0.46, 0.60)
                     : Phaser.Math.Clamp(w / 800, 0.50, 0.66))
                 : infoScale;
+
+            const baseContWinY = isCompactPortraitHud
+                ? h * (isVeryCompactPortraitHud ? 0.64 : 0.66)
+                : h * (isMidPortraitHud ? 0.72 : 0.67);
+            const baseControlsY = isCompactPortraitHud
+                ? h * (isVeryCompactPortraitHud ? 0.80 : 0.82)
+                : h * (isMidPortraitHud ? 0.87 : 0.84);
+            const portraitBaseLift = isVeryCompactPortraitHud ? 20 : (isCompactPortraitHud ? 16 : 12);
+            const bottomSystemInset = this.getBottomSystemInset();
+            const portraitBottomReserve = Phaser.Math.Clamp(20 + bottomSystemInset, 20, 140);
+            const controlsBottomReach = Math.max(160, 182 * controlsScale);
+            const controlsMaxY = h - controlsBottomReach - portraitBottomReserve;
+            let controlsY = Math.min(baseControlsY - portraitBaseLift, controlsMaxY);
+            const minGapToControls = Math.max(72, 96 * infoScale);
+            let contWinY = Math.min(
+                baseContWinY - Math.round(portraitBaseLift * 0.55),
+                controlsY - minGapToControls
+            );
+
+            const gameTop = (gameJackpot ? gameJackpot.bottom : (h * 0.10)) + 12;
+            const contWinMinY = gameTop + 96;
+            const contWinMaxY = controlsY - minGapToControls;
+            contWinY = Phaser.Math.Clamp(contWinY, contWinMinY, Math.max(contWinMinY, contWinMaxY));
+            controlsY = Phaser.Math.Clamp(controlsY, 0, controlsMaxY);
+            if (controlsY < (contWinY + minGapToControls)) {
+                contWinY = controlsY - minGapToControls;
+            }
+            contWinY = Math.max(contWinMinY, contWinY);
+
+            const gameBottom = contWinY - 70;
+            const availableGameHeight = Math.max(190, gameBottom - gameTop);
+            const scaleGame = Math.min((w * (isMidPortraitHud ? 0.99 : 0.96)) / CONFIG_GAME.reelTotalWidth, availableGameHeight / CONFIG_GAME.reelTotalHeight);
+            const gameCenterY = gameTop + (availableGameHeight / 2);
+
+            this.layerGame.setPosition(w / 2, gameCenterY);
+            this.layerGame.setScale(scaleGame);
+
+            this.replayTitleBox.setPosition(0, -CONFIG_GAME.reelTotalHeight/2 - 12);
+
             this.uiElements.contWin.container.setPosition(w / 2, contWinY); 
             this.uiElements.contWin.container.setScale(infoScale);
             
