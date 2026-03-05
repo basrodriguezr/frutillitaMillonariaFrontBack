@@ -1,0 +1,242 @@
+/* --- ESTILOS SÓLIDOS Y ELEGANTES (Sin Transparencias) --- */
+:root {
+    --bg-color: #0d1117;
+    --panel-color: #161b22;
+    --border-color: #30363d;
+    --text-main: #c9d1d9;
+    --text-muted: #8b949e;
+    --hover-color: #21262d;
+    --accent-blue: #1f6feb;
+    --accent-green: #238636;
+    --tab-active-border: #00C853; 
+}
+
+body, html, #root {
+    margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+    background-color: var(--bg-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    user-select: none; -webkit-user-select: none;
+}
+
+canvas { display: block; touch-action: none; position: absolute; top: 0; left: 0; z-index: 1; }
+
+.app-container {
+    position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; overflow: hidden;
+}
+
+#ui-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; min-height: 100vh; z-index: 10; pointer-events: none; }
+
+.hud-btn { width: clamp(42px, 4.4vw, 54px); height: clamp(42px, 4.4vw, 54px); background: var(--panel-color); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: clamp(20px, 2vw, 26px); cursor: pointer; pointer-events: auto; display: flex; align-items: center; justify-content: center; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
+.hud-btn:hover { background: var(--hover-color); transform: scale(1.05); border-color: var(--text-muted); }
+.hud-btn:active { transform: scale(0.95); }
+
+.pos-top-left { position: absolute; top: 20px; left: 20px; pointer-events: none; }
+.pos-top-left .hud-btn { pointer-events: auto; }
+.pos-bottom-left { position: absolute; bottom: 20px; left: 20px; pointer-events: none;}
+.pos-top-right { position: absolute; top: clamp(10px, 2vh, 20px); right: clamp(10px, 1.8vw, 24px); display: flex; gap: 10px; pointer-events: auto; z-index: 9999; }
+.pos-bottom-right { position: absolute; bottom: clamp(14px, 2vh, 26px); right: clamp(10px, 1.8vw, 24px); display: flex; flex-direction: column; gap: 8px; pointer-events: auto; z-index: 9999; }
+.pos-top-right .hud-btn,
+.pos-bottom-right .hud-btn {
+    background: rgba(22, 27, 34, 0.72);
+    border-color: rgba(48, 54, 61, 0.85);
+}
+.pos-top-right .hud-btn:hover,
+.pos-bottom-right .hud-btn:hover {
+    background: rgba(33, 38, 45, 0.88);
+}
+
+.btn-shop { display: none; } 
+
+/* Fondo oscuro completamente sólido */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 200; }
+.modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+/* Modal más alto y más ancho */
+.modal-large { 
+    background: var(--panel-color); 
+    border: 1px solid var(--border-color);
+    width: 95%; 
+    max-width: 950px; /* Mucho más ancho en escritorio */
+    height: 90vh; 
+    max-height: 750px; /* Más alto para evitar el scroll */
+    border-radius: 16px; 
+    display: flex; 
+    flex-direction: column; 
+    box-shadow: 0 30px 60px rgba(0,0,0,0.9); 
+    transform: scale(0.95); 
+    transition: transform 0.25s; 
+    overflow: hidden; 
+}
+.modal-overlay.active .modal-large { transform: scale(1); }
+
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; border-bottom: 1px solid var(--border-color); background: var(--bg-color); }
+.modal-title { color: var(--text-main); margin: 0; font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px;}
+.close-icon { font-size: 24px; color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
+.close-icon:hover { color: white; }
+
+.tabs-nav { 
+    display: flex; 
+    background: var(--panel-color); 
+    border-bottom: 1px solid var(--border-color); 
+    gap: 0; /* Asegura que no haya espacio entre pestañas */
+}
+
+.tab-btn { 
+    flex: 1; 
+    background: var(--panel-color); 
+    border: none; 
+    border-radius: 0; /* ¡ESTO QUITA LOS HUECOS REDONDEADOS! */
+    margin: 0; /* Quita márgenes por defecto del navegador */
+    padding: 18px; 
+    color: var(--text-muted); 
+    font-size: 15px; 
+    font-weight: 600; 
+    cursor: pointer; 
+    position: relative; 
+    transition: all 0.2s; 
+    border-bottom: 3px solid transparent; 
+}
+
+.tab-btn:hover { 
+    color: var(--text-main); 
+    background: var(--hover-color); 
+}
+
+.tab-btn.active { 
+    color: white; 
+    background: var(--bg-color); 
+    border-bottom-color: var(--tab-active-border); 
+}
+
+
+
+.tab-btn i { font-size: 18px; margin-right: 5px; vertical-align: text-bottom; }
+
+.modal-content-area { flex: 1; padding: 30px; overflow-y: auto; color: var(--text-main); background: var(--bg-color); }
+.tab-pane { display: none; animation: fadeIn 0.3s ease; }
+.tab-pane.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Tienda sólida */
+.shop-bet-control { display: flex; align-items: center; justify-content: center; gap: 15px; background: var(--panel-color); border: 1px solid var(--border-color); padding: 15px; border-radius: 12px; margin-bottom: 25px; }
+.shop-btn-adjust { background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); width: 45px; height: 45px; border-radius: 12px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.shop-btn-adjust:hover:not(:disabled) { background: var(--hover-color); border-color: var(--text-muted); transform: scale(1.05); }
+.shop-btn-adjust:disabled { cursor: not-allowed; opacity: 0.5; }
+.shop-bet-display { text-align: center; min-width: 120px; }
+.shop-bet-label { font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 2px; }
+.shop-bet-val { font-size: 22px; font-weight: 800; color: #e3b341; }
+
+.shop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.shop-item { background: var(--panel-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 25px 20px; text-align: center; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
+.shop-item:hover { border-color: var(--accent-blue); background: var(--hover-color); transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+.shop-amount { font-size: 32px; font-weight: 800; color: white; display: block; }
+.shop-desc { font-size: 15px; color: var(--text-muted); display: block; margin-bottom: 15px; }
+.shop-price-tag { background: var(--bg-color); color: var(--accent-green); padding: 8px 16px; border-radius: 20px; font-size: 16px; font-weight: bold; border: 1px solid rgba(35, 134, 54, 0.4); min-width: 90px; }
+
+/* Sub-navegación: Vista de Confirmación */
+.btn-back { background: transparent; color: var(--text-muted); border: none; font-size: 16px; cursor: pointer; display: flex; align-items: center; gap: 8px; margin-bottom: 20px; padding: 0; font-weight: bold; transition: color 0.2s;}
+.btn-back:hover { color: white; }
+.checkout-box { background: var(--panel-color); border: 1px solid var(--border-color); border-radius: 16px; padding: 40px; text-align: center; max-width: 400px; margin: 0 auto; }
+
+/* Historial sólido */
+.tab-pane table tr { border-bottom: 1px solid var(--border-color); }
+.btn-replay { background: var(--bg-color); border: 1px solid var(--border-color); color: #58a6ff; padding: 5px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.2s;}
+.btn-replay:hover { background: var(--hover-color); border-color: #58a6ff; color: white; }
+
+.modal-alert { background: var(--panel-color); border: 1px solid var(--border-color); width: 80%; max-width: 320px; border-radius: 16px; padding: 25px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.9); }
+.btn-confirm { background: var(--accent-blue); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 20px; transition: background 0.2s; }
+.btn-confirm:hover { background: #388bfd; }
+
+.buy-options-layout {
+    display: flex;
+    gap: 15px;
+    flex-direction: row;
+}
+
+/* --- SWITCH TIPO IPHONE PARA AJUSTES --- */
+.switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--panel-color); border: 1px solid var(--border-color); transition: .4s; border-radius: 34px; }
+.slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: var(--text-muted); transition: .4s; border-radius: 50%; }
+input:checked + .slider { background-color: var(--accent-green); border-color: var(--accent-green); }
+input:checked + .slider:before { transform: translateX(22px); background-color: white; }
+
+@media (max-width: 1100px), (max-height: 760px) {
+    .hud-btn {
+        width: 42px;
+        height: 42px;
+        font-size: 20px;
+        border-radius: 10px;
+    }
+
+    .pos-bottom-right {
+        bottom: 12px;
+        right: 12px;
+    }
+}
+
+@media (max-width: 900px) {
+    .hud-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 18px;
+        border-radius: 10px;
+    }
+
+    .pos-top-right {
+        top: 10px;
+        right: 10px;
+    }
+
+    .pos-bottom-right {
+        top: 50%;
+        bottom: auto;
+        left: auto;
+        right: 8px;
+        transform: translateY(-50%);
+        flex-direction: column;
+        gap: 6px;
+        padding: 0;
+        border-radius: 0;
+        background: transparent;
+        backdrop-filter: none;
+    }
+}
+
+@media (max-width: 900px) and (orientation: portrait) {
+    .pos-bottom-right {
+        top: 50%;
+        bottom: auto;
+        right: 8px;
+        transform: translateY(-50%);
+        gap: 6px;
+    }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+    .hud-btn {
+        width: 34px;
+        height: 34px;
+        font-size: 16px;
+        border-radius: 9px;
+    }
+
+    .pos-top-right {
+        top: 8px;
+        right: 8px;
+    }
+
+    .pos-bottom-right {
+        top: auto;
+        bottom: 8px;
+        right: 8px;
+        transform: none;
+        gap: 6px;
+    }
+}
+
+@media (orientation: portrait) {
+    .buy-options-layout {
+        flex-direction: column;
+    }
+}
