@@ -1666,14 +1666,15 @@ export class MainScene extends Phaser.Scene {
                 ? h * (isVeryCompactPortraitHud ? 0.80 : 0.82)
                 : h * (isMidPortraitHud ? 0.87 : 0.84);
             const portraitBaseLift = isVeryCompactPortraitHud ? 20 : (isCompactPortraitHud ? 16 : 12);
+            const portraitExtraLift = 10;
             const bottomSystemInset = this.getBottomSystemInset();
             const portraitBottomReserve = Phaser.Math.Clamp(20 + bottomSystemInset, 20, 140);
             const controlsBottomReach = Math.max(160, 182 * controlsScale);
             const controlsMaxY = h - controlsBottomReach - portraitBottomReserve;
-            let controlsY = Math.min(baseControlsY - portraitBaseLift, controlsMaxY);
+            let controlsY = Math.min(baseControlsY - portraitBaseLift - portraitExtraLift, controlsMaxY);
             const minGapToControls = Math.max(72, 96 * infoScale);
             let contWinY = Math.min(
-                baseContWinY - Math.round(portraitBaseLift * 0.55),
+                baseContWinY - Math.round((portraitBaseLift + portraitExtraLift) * 0.55) - portraitExtraLift,
                 controlsY - minGapToControls
             );
 
