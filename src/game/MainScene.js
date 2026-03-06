@@ -252,10 +252,10 @@ export class MainScene extends Phaser.Scene {
             return { cardW: 100, cardH: 140, pad: 10 };
         }
         if (qty >= 20) {
-            return { cardW: 96, cardH: 126, pad: 8 };
+            return { cardW: 80, cardH: 100, pad: 8 };
         }
         if (qty >= 15) {
-            return { cardW: 98, cardH: 132, pad: 8 };
+            return { cardW: 80, cardH: 100, pad: 8 };
         }
         return { cardW: 100, cardH: 140, pad: 10 };
     }
@@ -1584,7 +1584,7 @@ export class MainScene extends Phaser.Scene {
             let cardsYWorld;
             if (isPortrait) {
                 const cardsBottomLimit = h - shopBottomReserve;
-                let cardsTopWorld = cardsStartY + (isMobilePortrait ? 6 : 0) - 100;
+                let cardsTopWorld = cardsStartY + (isMobilePortrait ? 6 : 0) - 140;
                 let projectedBottom = cardsTopWorld + (gridH * cardScale);
                 if (projectedBottom > cardsBottomLimit) {
                     const minTopWorld = flowY + 4;
