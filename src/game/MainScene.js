@@ -247,6 +247,19 @@ export class MainScene extends Phaser.Scene {
         return 5;
     }
 
+    getShopCardMetrics(qty, isPortrait) {
+        if (!isPortrait) {
+            return { cardW: 100, cardH: 140, pad: 10 };
+        }
+        if (qty >= 20) {
+            return { cardW: 96, cardH: 126, pad: 8 };
+        }
+        if (qty >= 15) {
+            return { cardW: 98, cardH: 132, pad: 8 };
+        }
+        return { cardW: 100, cardH: 140, pad: 10 };
+    }
+
     hideAllLayers() {
         if(this.layerLobby) this.layerLobby.setVisible(false).setAlpha(0);
         if(this.layerShop) this.layerShop.setVisible(false).setAlpha(0);
@@ -458,8 +471,7 @@ export class MainScene extends Phaser.Scene {
         const actualCols = Math.min(maxCols, this.getShopGridCols(qty, isPortrait));
         this.currentShopCols = actualCols;
         const rows = Math.ceil(qty / actualCols);
-        
-        const cardW = 100, cardH = 140, pad = 10;
+        const { cardW, cardH, pad } = this.getShopCardMetrics(qty, isPortrait);
         const totalW = (actualCols * cardW) + ((actualCols - 1) * pad);
         const totalH = (rows * cardH) + ((rows - 1) * pad);
         const startX = -totalW / 2 + cardW / 2;
@@ -1382,7 +1394,7 @@ export class MainScene extends Phaser.Scene {
             );
 
             let titleWorldY = lobbyJackpot ? (lobbyJackpot.bottom + (isPortrait ? 26 : 24)) : (isPortrait ? h * 0.24 : h * 0.20);
-            this.lobbyTitle.setPosition(0, titleWorldY - (h / 2));
+            this.lobbyTitle.setPosition(0, titleWorldY - (h / 2.3));
 
             if (isPortrait) {
                 let scaleBtn = Phaser.Math.Clamp((contentWidth * 0.90) / 480, 0.68, 1.0);
@@ -1439,8 +1451,8 @@ export class MainScene extends Phaser.Scene {
                         titleWorldY -= shiftUp;
                         this.lobbyTitle.setPosition(0, titleWorldY - (h / 2));
                     }
-                    this.btnLobbyComprar.setPosition(-separation, buttonY - (h / 2));
-                    this.btnLobbyJugar.setPosition(separation, buttonY - (h / 2));
+                    this.btnLobbyComprar.setPosition(-separation, buttonY - (h / 3));
+                    this.btnLobbyJugar.setPosition(separation, buttonY - (h / 3));
                     this.btnLobbyComprar.baseScale = scaleBtn;
                     this.btnLobbyJugar.baseScale = scaleBtn;
                     this.btnLobbyComprar.setScale(scaleBtn);
@@ -1458,7 +1470,7 @@ export class MainScene extends Phaser.Scene {
             const safeTop = isPortrait ? 10 : 12;
             const shopBottomInset = isPortrait ? this.getBottomSystemInset() : 0;
             const shopBottomReserve = isMobilePortrait
-                ? Phaser.Math.Clamp(72 + shopBottomInset, 72, 170)
+                ? Phaser.Math.Clamp(58 + Math.max(0, shopBottomInset), 58, 140)
                 : 12;
             const isShortLandscapeShop = !isPortrait && h <= 430;
             const spacing = isPortrait ? 12 : (isShortLandscapeShop ? 8 : 14);
@@ -1467,8 +1479,9 @@ export class MainScene extends Phaser.Scene {
                 this.drawShopCards(this.shopQty);
             }
             const rows = Math.ceil(this.shopQty / actualCols);
-            const gridW = (actualCols * 100) + ((actualCols - 1) * 10);
-            const gridH = (rows * 140) + ((rows - 1) * 10);
+            const { cardW: shopCardW, cardH: shopCardH, pad: shopCardPad } = this.getShopCardMetrics(this.shopQty, isPortrait);
+            const gridW = (actualCols * shopCardW) + ((actualCols - 1) * shopCardPad);
+            const gridH = (rows * shopCardH) + ((rows - 1) * shopCardPad);
             const splitPortraitShopInfo = isPortrait && w >= 520;
             const isNarrowLandscapeShop = !isPortrait && w <= 1100;
             const landscapeShopShiftX = !isPortrait
@@ -1548,7 +1561,7 @@ export class MainScene extends Phaser.Scene {
                 const rightPanelBase = isNarrowLandscapeShop ? 0.28 : 0.24;
                 const rightPanelX = shopLayoutWidth * rightPanelBase;
                 this.shopTopLeft.setPosition((-shopLayoutWidth * 0.25) + landscapeShopShiftX, topLeftYWorld - centerY);
-                this.shopTopRight.setPosition(rightPanelX + landscapeShopShiftX, topRightYWorld - centerY);
+                this.shopTopRight.setPosition(rightPanelX + landscapeShopShiftX + 100, topRightYWorld - centerY);
                 this.shopTopLeft.setScale(leftScale);
                 this.shopTopRight.setScale(rightScale);
                 controlsBottomYWorld = Math.max(
@@ -1561,21 +1574,34 @@ export class MainScene extends Phaser.Scene {
             const maxW = shopLayoutWidth * (isPortrait ? 0.95 : 0.98);
             const cardsTopPadding = isShortLandscapeShop ? 10 : 0;
             const cardsStartY = flowY + cardsTopPadding;
-            const maxH = Math.max(h - cardsStartY - shopBottomReserve, 20);
             const cardScaleCap = isShortLandscapeShop ? 1.08 : 1.2;
-            const cardScaleRaw = Math.min(maxW / gridW, maxH / gridH, cardScaleCap);
-            const cardScale = isShortLandscapeShop ? (cardScaleRaw * 0.92) : cardScaleRaw;
-            const cardsBlockHeight = gridH * cardScale;
-            const cardsBlockWidth = gridW * cardScale;
+            const maxH = Math.max(h - cardsStartY - shopBottomReserve, 20);
+            let cardScale = Math.min(maxW / gridW, cardScaleCap);
+            if (!isPortrait) {
+                const cardScaleRaw = Math.min(cardScale, maxH / gridH);
+                cardScale = isShortLandscapeShop ? (cardScaleRaw * 0.92) : cardScaleRaw;
+            }
             let cardsYWorld;
             if (isPortrait) {
-                const cardsCenterTarget = cardsStartY + (maxH * (isMobilePortrait ? 0.46 : 0.68));
-                const cardsCenterMin = cardsStartY + (cardsBlockHeight / 2);
-                const cardsCenterMax = h - shopBottomReserve - (cardsBlockHeight / 2);
-                cardsYWorld = Phaser.Math.Clamp(cardsCenterTarget, cardsCenterMin, Math.max(cardsCenterMin, cardsCenterMax));
+                const cardsBottomLimit = h - shopBottomReserve;
+                let cardsTopWorld = cardsStartY + (isMobilePortrait ? 6 : 0) - 100;
+                let projectedBottom = cardsTopWorld + (gridH * cardScale);
+                if (projectedBottom > cardsBottomLimit) {
+                    const minTopWorld = flowY + 4;
+                    const shiftUp = Math.min(projectedBottom - cardsBottomLimit, Math.max(0, cardsTopWorld - minTopWorld));
+                    cardsTopWorld -= shiftUp;
+                    projectedBottom = cardsTopWorld + (gridH * cardScale);
+                }
+                if (projectedBottom > cardsBottomLimit) {
+                    const fitScale = (cardsBottomLimit - cardsTopWorld) / gridH;
+                    cardScale = Phaser.Math.Clamp(Math.min(cardScale, fitScale), 0.52, cardScaleCap);
+                }
+                cardsYWorld = cardsTopWorld + ((gridH * cardScale) / 2);
             } else {
-                cardsYWorld = cardsStartY + (cardsBlockHeight / 2);
+                cardsYWorld = cardsStartY + ((gridH * cardScale) / 2);
             }
+            const cardsBlockHeight = gridH * cardScale;
+            const cardsBlockWidth = gridW * cardScale;
             const cardsTop = cardsYWorld - (cardsBlockHeight / 2);
             let cardsShiftX = 0;
             if (!isPortrait && isShortLandscapeShop) {
@@ -1903,7 +1929,7 @@ export class MainScene extends Phaser.Scene {
                     hudDockTop = Math.round(Phaser.Math.Clamp(boardBottom + 12, 8, maxTop));
                 } else if (this.layerShop && this.layerShop.visible) {
                     // En tienda se ancla arriba para no tapar la grilla de tickets.
-                    hudDockTop = Math.round(Phaser.Math.Clamp(92, 8, maxTop));
+                    hudDockTop = Math.round(Phaser.Math.Clamp(175, 8, maxTop));
                 } else if (this.layerLobby && this.layerLobby.visible && this.btnLobbyJugar) {
                     const playBottom = this.btnLobbyJugar.getBounds().bottom;
                     hudDockTop = Math.round(Phaser.Math.Clamp(playBottom + 12, 8, maxTop));
