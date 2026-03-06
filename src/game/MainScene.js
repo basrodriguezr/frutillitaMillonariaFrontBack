@@ -252,7 +252,7 @@ export class MainScene extends Phaser.Scene {
             return { cardW: 100, cardH: 140, pad: 10 };
         }
         if (qty >= 20) {
-            return { cardW: 50, cardH: 60, pad: 5 };
+            return { cardW: 45, cardH: 50, pad: 5 };
         }
         if (qty >= 15) {
             return { cardW: 50, cardH: 70, pad: 5 };
