@@ -1929,7 +1929,7 @@ export class MainScene extends Phaser.Scene {
                     hudDockTop = Math.round(Phaser.Math.Clamp(boardBottom + 12, 8, maxTop));
                 } else if (this.layerShop && this.layerShop.visible) {
                     // En tienda se ancla arriba para no tapar la grilla de tickets.
-                    hudDockTop = Math.round(Phaser.Math.Clamp(175, 8, maxTop));
+                    hudDockTop = Math.round(Phaser.Math.Clamp(160, 8, maxTop));
                 } else if (this.layerLobby && this.layerLobby.visible && this.btnLobbyJugar) {
                     const playBottom = this.btnLobbyJugar.getBounds().bottom;
                     hudDockTop = Math.round(Phaser.Math.Clamp(playBottom + 12, 8, maxTop));
