@@ -260,6 +260,32 @@ export class MainScene extends Phaser.Scene {
         return { cardW: 100, cardH: 140, pad: 10 };
     }
 
+    getShopCardContentMetrics(cardW, cardH) {
+        const scale = Phaser.Math.Clamp(Math.min(cardW / 100, cardH / 140), 0.36, 1);
+        const winFont = Math.max(12, Math.round(20 * scale));
+        const loseFont = Math.max(10, Math.round(16 * scale));
+        const verBtnWidth = Phaser.Math.Clamp(Math.round(cardW * 0.72), 24, 70);
+        const verBtnHeight = Phaser.Math.Clamp(Math.round(cardH * 0.28), 14, 30);
+        const verBtnMarginBottom = Math.max(3, Math.round(cardH * 0.08));
+        const verBtnTopY = Math.round((cardH / 2) - verBtnHeight - verBtnMarginBottom);
+        const verBtnFont = Phaser.Math.Clamp(Math.round(verBtnHeight * 0.60), 8, 18);
+        return {
+            hiddenTextY: 0,
+            hiddenFont: Math.max(16, Math.round(45 * scale)),
+            resultTextY: Math.round(-18 * scale),
+            winFont,
+            loseFont,
+            minWinFont: Math.max(9, Math.round(winFont * 0.72)),
+            lineSpacing: Math.round(-2 * scale),
+            verBtnWidth,
+            verBtnHeight,
+            verBtnTopY,
+            verBtnCenterY: verBtnTopY + Math.round(verBtnHeight / 2),
+            verBtnRadius: Math.max(4, Math.round(verBtnHeight * 0.30)),
+            verBtnFont
+        };
+    }
+
     hideAllLayers() {
         if(this.layerLobby) this.layerLobby.setVisible(false).setAlpha(0);
         if(this.layerShop) this.layerShop.setVisible(false).setAlpha(0);
@@ -472,6 +498,7 @@ export class MainScene extends Phaser.Scene {
         this.currentShopCols = actualCols;
         const rows = Math.ceil(qty / actualCols);
         const { cardW, cardH, pad } = this.getShopCardMetrics(qty, isPortrait);
+        const contentMetrics = this.getShopCardContentMetrics(cardW, cardH);
         const totalW = (actualCols * cardW) + ((actualCols - 1) * pad);
         const totalH = (rows * cardH) + ((rows - 1) * pad);
         const startX = -totalW / 2 + cardW / 2;
@@ -488,14 +515,16 @@ export class MainScene extends Phaser.Scene {
             bg.fillStyle(0x333333, 1); bg.lineStyle(2, 0xffffff, 0.3);
             bg.fillRoundedRect(-cardW/2, -cardH/2, cardW, cardH, 10); bg.strokeRoundedRect(-cardW/2, -cardH/2, cardW, cardH, 10);
             
-            let txt = this.add.text(0, 0, "?", { fontSize: '45px', fontFamily: 'Luckiest Guy, Arial', color: '#aaaaaa', align: 'center' }).setOrigin(0.5);
+            let txt = this.add.text(0, contentMetrics.hiddenTextY, "?", { fontSize: `${contentMetrics.hiddenFont}px`, fontFamily: 'Luckiest Guy, Arial', color: '#aaaaaa', align: 'center' }).setOrigin(0.5);
+            txt.setLineSpacing(contentMetrics.lineSpacing);
             let btnVerBg = this.add.graphics().setVisible(false);
-            let btnVerTxt = this.add.text(0, 40, "VER", { fontFamily: 'Luckiest Guy, Arial', fontSize: '18px', color: '#FFF' }).setOrigin(0.5).setVisible(false);
+            let btnVerTxt = this.add.text(0, contentMetrics.verBtnCenterY, "VER", { fontFamily: 'Luckiest Guy, Arial', fontSize: `${contentMetrics.verBtnFont}px`, color: '#FFF' }).setOrigin(0.5).setVisible(false);
             let hit = this.add.zone(0, 0, cardW, cardH).setOrigin(0.5); 
             
             card.add([bg, txt, btnVerBg, btnVerTxt, hit]);
             card.bg = bg; card.txt = txt; card.btnVerBg = btnVerBg; card.btnVerTxt = btnVerTxt;
             card.hit = hit; card.cardW = cardW; card.cardH = cardH; card.replayData = null;
+            card.contentMetrics = contentMetrics;
             
             this.shopCardsContainer.add(card);
             this.shopCards.push(card);
@@ -532,12 +561,19 @@ export class MainScene extends Phaser.Scene {
 
     resetShopCards() {
         this.shopCards.forEach(card => {
+            const cm = card.contentMetrics || this.getShopCardContentMetrics(card.cardW, card.cardH);
             card.setScale(1);
             card.bg.clear();
             card.bg.fillStyle(0x333333, 1); card.bg.lineStyle(2, 0xffffff, 0.3);
             card.bg.fillRoundedRect(-card.cardW/2, -card.cardH/2, card.cardW, card.cardH, 10);
             card.bg.strokeRoundedRect(-card.cardW/2, -card.cardH/2, card.cardW, card.cardH, 10);
-            card.txt.setText("?"); card.txt.setY(0); card.txt.setColor('#aaaaaa'); card.txt.setFontSize('45px');
+            card.txt.setText("?");
+            card.txt.setY(cm.hiddenTextY);
+            card.txt.setColor('#aaaaaa');
+            card.txt.setFontSize(`${cm.hiddenFont}px`);
+            card.txt.setLineSpacing(cm.lineSpacing);
+            card.btnVerTxt.setY(cm.verBtnCenterY);
+            card.btnVerTxt.setFontSize(`${cm.verBtnFont}px`);
             card.btnVerBg.setVisible(false); card.btnVerTxt.setVisible(false); card.hit.disableInteractive(); 
             card.replayData = null;
         });
@@ -567,6 +603,7 @@ export class MainScene extends Phaser.Scene {
                 this.tweens.add({
                     targets: card, scaleX: 0, duration: 150, yoyo: true,
                     onYoyo: () => {
+                        const cm = card.contentMetrics || this.getShopCardContentMetrics(card.cardW, card.cardH);
                         const prize = card.replayData.totalWin;
                         const isWin = prize > 0;
 
@@ -596,15 +633,26 @@ export class MainScene extends Phaser.Scene {
                         card.bg.strokeRoundedRect(-card.cardW/2, -card.cardH/2, card.cardW, card.cardH, 10);
                         
                         card.txt.setText(isWin ? `PREMIO\n$${this.formatPoints(prize)}` : `SIN\nPREMIO`);
-                        card.txt.setFontSize(isWin ? '20px' : '16px');
+                        card.txt.setFontSize(`${isWin ? cm.winFont : cm.loseFont}px`);
                         card.txt.setColor(isWin ? '#FFD700' : '#888888');
-                        card.txt.setY(-20); 
+                        card.txt.setY(cm.resultTextY);
+                        card.txt.setLineSpacing(cm.lineSpacing);
+                        if (isWin) {
+                            const maxTextWidth = Math.max(38, card.cardW - 12);
+                            let fitFont = cm.winFont;
+                            while (fitFont > cm.minWinFont && card.txt.width > maxTextWidth) {
+                                fitFont -= 1;
+                                card.txt.setFontSize(`${fitFont}px`);
+                            }
+                        }
 
                         card.btnVerBg.clear();
                         card.btnVerBg.fillStyle(0x00C853, 1); 
                         card.btnVerBg.lineStyle(1, 0xffffff, 0.8);
-                        card.btnVerBg.fillRoundedRect(-35, 25, 70, 30, 8);
-                        card.btnVerBg.strokeRoundedRect(-35, 25, 70, 30, 8);
+                        card.btnVerBg.fillRoundedRect(-(cm.verBtnWidth / 2), cm.verBtnTopY, cm.verBtnWidth, cm.verBtnHeight, cm.verBtnRadius);
+                        card.btnVerBg.strokeRoundedRect(-(cm.verBtnWidth / 2), cm.verBtnTopY, cm.verBtnWidth, cm.verBtnHeight, cm.verBtnRadius);
+                        card.btnVerTxt.setY(cm.verBtnCenterY);
+                        card.btnVerTxt.setFontSize(`${cm.verBtnFont}px`);
                         card.btnVerBg.setVisible(true);
                         card.btnVerTxt.setVisible(true);
 
