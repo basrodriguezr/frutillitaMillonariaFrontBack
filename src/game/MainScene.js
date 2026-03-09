@@ -196,6 +196,21 @@ const VIEWPORT_SCALE_MODEL = {
     }
 };
 
+// Ajustes finos por resolucion exacta (width x height) para evitar que un cambio
+// en una resolucion afecte a otras.
+const VIEWPORT_RESOLUTION_OVERRIDES = {
+    // Ejemplo vertical (iPhone 14 Pro Max en devtools): 430 x 932
+    '430x932': {
+        lobby: {
+            titleGapFromJackpot: 100
+        }
+    },
+    // Ejemplo horizontal del mismo equipo: 932 x 430
+    '932x430': {
+        lobby: {}
+    }
+};
+
 export class MainScene extends Phaser.Scene {
     constructor() {
         super({ key: 'MainScene' });
@@ -352,6 +367,11 @@ export class MainScene extends Phaser.Scene {
             scale: viewportScale,
             ...model
         };
+    }
+
+    getResolutionOverrides(width, height) {
+        const key = `${Math.max(1, Math.round(Number(width) || 1))}x${Math.max(1, Math.round(Number(height) || 1))}`;
+        return VIEWPORT_RESOLUTION_OVERRIDES[key] || null;
     }
 
     generateTicketId() {
@@ -1681,21 +1701,45 @@ export class MainScene extends Phaser.Scene {
 
         if (this.layerLobby && this.layerLobby.visible) {
             this.layerLobby.setPosition(w/2, h/2);
+            const lobbyOverrides = this.getResolutionOverrides(w, h)?.lobby || {};
+            const lobbyBase = isPortrait
+                ? {
+                    jackpotTop: 8,
+                    jackpotWidth: Math.min(w * 0.86, 860),
+                    jackpotMaxHeightRatio: 0.38,
+                    titleGapFromJackpot: 26,
+                    titleFallbackRatio: 0.24,
+                    portraitButtonsStartGap: 200,
+                    portraitButtonsGap: 100
+                }
+                : {
+                    jackpotTop: 10,
+                    jackpotWidth: Math.min(contentWidth * 0.72, 1080),
+                    jackpotMaxHeightRatio: 0.46,
+                    titleGapFromJackpot: 24,
+                    titleFallbackRatio: 0.20,
+                    landscapeStackButtonsStartGap: 120,
+                    landscapeStackButtonsGap: 140,
+                    landscapeRowButtonsYGap: 50
+                };
+            const lobbyCfg = { ...lobbyBase, ...lobbyOverrides };
 
             const lobbyJackpot = placeJackpot(
                 w / 2,
-                isPortrait ? 8 : 10,
-                isPortrait ? Math.min(w * 0.86, 860) : Math.min(contentWidth * 0.72, 1080),
-                isPortrait ? 0.38 : 0.46
+                lobbyCfg.jackpotTop,
+                lobbyCfg.jackpotWidth,
+                lobbyCfg.jackpotMaxHeightRatio
             );
 
-            let titleWorldY = lobbyJackpot ? (lobbyJackpot.bottom + (isPortrait ? 26 : 24)) : (isPortrait ? h * 0.24 : h * 0.20);
+            let titleWorldY = lobbyJackpot
+                ? (lobbyJackpot.bottom + lobbyCfg.titleGapFromJackpot)
+                : (h * lobbyCfg.titleFallbackRatio);
             this.lobbyTitle.setPosition(0, titleWorldY - (h / 2));
 
             if (isPortrait) {
                 let scaleBtn = Phaser.Math.Clamp(((contentWidth * 0.90) / 480) * lobbyScaleFactor, 0.62, 1.08);
-                let btnComprarY = titleWorldY + 130;
-                let btnJugarY = btnComprarY + 145;
+                let btnComprarY = titleWorldY + lobbyCfg.portraitButtonsStartGap;
+                let btnJugarY = btnComprarY + lobbyCfg.portraitButtonsGap;
                 const buttonBottom = btnJugarY + (60 * scaleBtn);
                 const overflow = Math.max(0, buttonBottom - (h - 24));
                 if (overflow > 0) {
@@ -1719,8 +1763,8 @@ export class MainScene extends Phaser.Scene {
 
                 if (fitScaleHorizontal < 0.45) {
                     const scaleBtn = Phaser.Math.Clamp(((contentWidth * 0.90) / buttonBaseWidth) * lobbyScaleFactor, 0.52, 1.0);
-                    let btnComprarY = titleWorldY + 120;
-                    let btnJugarY = btnComprarY + (140 * scaleBtn);
+                    let btnComprarY = titleWorldY + lobbyCfg.landscapeStackButtonsStartGap;
+                    let btnJugarY = btnComprarY + (lobbyCfg.landscapeStackButtonsGap * scaleBtn);
                     const buttonBottom = btnJugarY + (60 * scaleBtn);
                     if (buttonBottom > (h - 24)) {
                         const shiftUp = buttonBottom - (h - 24);
@@ -1739,7 +1783,7 @@ export class MainScene extends Phaser.Scene {
                     const scaleBtn = Phaser.Math.Clamp(fitScaleHorizontal * lobbyScaleFactor, 0.45, 1.08);
                     const buttonWidth = buttonBaseWidth * scaleBtn;
                     const separation = (buttonWidth / 2) + (buttonGap / 2);
-                    let buttonY = titleWorldY + 50;
+                    let buttonY = titleWorldY + lobbyCfg.landscapeRowButtonsYGap;
                     const buttonBottom = buttonY + (60 * scaleBtn);
                     if (buttonBottom > (h - 24)) {
                         const shiftUp = buttonBottom - (h - 24);
@@ -2248,7 +2292,7 @@ export class MainScene extends Phaser.Scene {
                     hudDockTop = Math.round(Phaser.Math.Clamp(viewportProfile.layout.hudDockTopShop, 8, maxTop));
                 } else if (this.layerLobby && this.layerLobby.visible && this.btnLobbyJugar) {
                     const playBottom = this.btnLobbyJugar.getBounds().bottom;
-                    hudDockTop = Math.round(Phaser.Math.Clamp(playBottom + 12, 8, maxTop));
+                    hudDockTop = Math.round(Phaser.Math.Clamp(playBottom - 200, 8, maxTop));
                 }
             }
             window.setHudDockTop(hudDockTop);
