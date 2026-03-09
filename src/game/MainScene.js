@@ -8,6 +8,193 @@ const CELL_H = CONFIG_GAME.reelTotalHeight / CONFIG_GAME.rows;
 const BET_VALUES = [100, 200, 300, 400, 500, 1000, 2000, 5000, 10000];
 const JACKPOT_SIZE_BOOST = 1.15;
 const HISTORY_STORAGE_KEY = 'frutilla_history_v1';
+const VIEWPORT_SCALE_MODEL = {
+    'mobile-portrait': {
+        baseResolution: { width: 390, height: 844 },
+        scaleClamp: { min: 0.78, max: 1.0 },
+        layout: {
+            sidePaddingPortrait: 10,
+            sidePaddingLandscape: 14,
+            hudRightReservePortrait: 66,
+            hudRightReserveLandscapeRatio: 0.1,
+            hudRightReserveLandscapeMin: 88,
+            hudRightReserveLandscapeMax: 124,
+            hudDockTopShop: 160
+        },
+        sections: {
+            lobby: 0.92,
+            shop: 0.88,
+            shopCards: 0.88,
+            shopResult: 0.9,
+            gameBoard: 0.92,
+            gameInfo: 0.9,
+            gameControls: 0.88,
+            shopTitle: 0.9
+        },
+        thresholds: {
+            compactPortraitMaxW: 760,
+            compactPortraitMaxH: 960,
+            veryCompactPortraitMaxW: 460,
+            veryCompactPortraitMaxH: 760,
+            midPortraitMinW: 520,
+            midPortraitMaxW: 860,
+            shortLandscapeShopMaxH: 430,
+            shortLandscapeGameMaxH: 520,
+            veryShortLandscapeGameMaxH: 430,
+            midLandscapeMinW: 640,
+            midLandscapeMaxW: 940,
+            wideLandscapeMinW: 1200
+        }
+    },
+    'tablet-portrait': {
+        baseResolution: { width: 834, height: 1112 },
+        scaleClamp: { min: 0.84, max: 1.08 },
+        layout: {
+            sidePaddingPortrait: 12,
+            sidePaddingLandscape: 16,
+            hudRightReservePortrait: 52,
+            hudRightReserveLandscapeRatio: 0.1,
+            hudRightReserveLandscapeMin: 94,
+            hudRightReserveLandscapeMax: 132,
+            hudDockTopShop: 144
+        },
+        sections: {
+            lobby: 0.98,
+            shop: 0.96,
+            shopCards: 0.96,
+            shopResult: 0.96,
+            gameBoard: 0.98,
+            gameInfo: 0.97,
+            gameControls: 0.96,
+            shopTitle: 0.96
+        },
+        thresholds: {
+            compactPortraitMaxW: 980,
+            compactPortraitMaxH: 1180,
+            veryCompactPortraitMaxW: 620,
+            veryCompactPortraitMaxH: 900,
+            midPortraitMinW: 760,
+            midPortraitMaxW: 1120,
+            shortLandscapeShopMaxH: 500,
+            shortLandscapeGameMaxH: 560,
+            veryShortLandscapeGameMaxH: 470,
+            midLandscapeMinW: 900,
+            midLandscapeMaxW: 1200,
+            wideLandscapeMinW: 1400
+        }
+    },
+    'mobile-landscape': {
+        baseResolution: { width: 844, height: 390 },
+        scaleClamp: { min: 0.74, max: 0.96 },
+        layout: {
+            sidePaddingPortrait: 10,
+            sidePaddingLandscape: 14,
+            hudRightReservePortrait: 66,
+            hudRightReserveLandscapeRatio: 0.09,
+            hudRightReserveLandscapeMin: 86,
+            hudRightReserveLandscapeMax: 118,
+            hudDockTopShop: 160
+        },
+        sections: {
+            lobby: 0.86,
+            shop: 0.82,
+            shopCards: 0.82,
+            shopResult: 0.84,
+            gameBoard: 0.84,
+            gameInfo: 0.84,
+            gameControls: 0.82,
+            shopTitle: 0.86
+        },
+        thresholds: {
+            compactPortraitMaxW: 760,
+            compactPortraitMaxH: 960,
+            veryCompactPortraitMaxW: 460,
+            veryCompactPortraitMaxH: 760,
+            midPortraitMinW: 520,
+            midPortraitMaxW: 860,
+            shortLandscapeShopMaxH: 430,
+            shortLandscapeGameMaxH: 520,
+            veryShortLandscapeGameMaxH: 430,
+            midLandscapeMinW: 640,
+            midLandscapeMaxW: 940,
+            wideLandscapeMinW: 1160
+        }
+    },
+    'tablet-landscape': {
+        baseResolution: { width: 1180, height: 820 },
+        scaleClamp: { min: 0.82, max: 1.04 },
+        layout: {
+            sidePaddingPortrait: 12,
+            sidePaddingLandscape: 16,
+            hudRightReservePortrait: 52,
+            hudRightReserveLandscapeRatio: 0.1,
+            hudRightReserveLandscapeMin: 92,
+            hudRightReserveLandscapeMax: 128,
+            hudDockTopShop: 148
+        },
+        sections: {
+            lobby: 0.94,
+            shop: 0.92,
+            shopCards: 0.92,
+            shopResult: 0.93,
+            gameBoard: 0.93,
+            gameInfo: 0.92,
+            gameControls: 0.91,
+            shopTitle: 0.92
+        },
+        thresholds: {
+            compactPortraitMaxW: 980,
+            compactPortraitMaxH: 1180,
+            veryCompactPortraitMaxW: 620,
+            veryCompactPortraitMaxH: 900,
+            midPortraitMinW: 760,
+            midPortraitMaxW: 1120,
+            shortLandscapeShopMaxH: 500,
+            shortLandscapeGameMaxH: 560,
+            veryShortLandscapeGameMaxH: 470,
+            midLandscapeMinW: 900,
+            midLandscapeMaxW: 1280,
+            wideLandscapeMinW: 1400
+        }
+    },
+    'desktop-landscape': {
+        baseResolution: { width: 1440, height: 900 },
+        scaleClamp: { min: 0.9, max: 1.12 },
+        layout: {
+            sidePaddingPortrait: 12,
+            sidePaddingLandscape: 18,
+            hudRightReservePortrait: 42,
+            hudRightReserveLandscapeRatio: 0.1,
+            hudRightReserveLandscapeMin: 96,
+            hudRightReserveLandscapeMax: 140,
+            hudDockTopShop: 132
+        },
+        sections: {
+            lobby: 1,
+            shop: 1,
+            shopCards: 1,
+            shopResult: 1,
+            gameBoard: 1,
+            gameInfo: 1,
+            gameControls: 1,
+            shopTitle: 1
+        },
+        thresholds: {
+            compactPortraitMaxW: 980,
+            compactPortraitMaxH: 1180,
+            veryCompactPortraitMaxW: 620,
+            veryCompactPortraitMaxH: 900,
+            midPortraitMinW: 760,
+            midPortraitMaxW: 1120,
+            shortLandscapeShopMaxH: 560,
+            shortLandscapeGameMaxH: 560,
+            veryShortLandscapeGameMaxH: 470,
+            midLandscapeMinW: 900,
+            midLandscapeMaxW: 1320,
+            wideLandscapeMinW: 1280
+        }
+    }
+};
 
 export class MainScene extends Phaser.Scene {
     constructor() {
@@ -127,6 +314,44 @@ export class MainScene extends Phaser.Scene {
         const rawInset = (window.innerHeight || this.scale.height || 0) - (vv.height + vv.offsetTop);
         if (!Number.isFinite(rawInset)) return 0;
         return Math.max(0, rawInset);
+    }
+
+    getViewportScaleProfile(width, height) {
+        const safeWidth = Math.max(1, Math.round(Number(width) || 1));
+        const safeHeight = Math.max(1, Math.round(Number(height) || 1));
+        const orientation = safeHeight > safeWidth ? 'portrait' : 'landscape';
+        const shortSide = Math.min(safeWidth, safeHeight);
+        const longSide = Math.max(safeWidth, safeHeight);
+        const hasTouchInput = typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0;
+
+        let profileKey = 'desktop-landscape';
+        if (orientation === 'portrait') {
+            profileKey = safeWidth <= 767 ? 'mobile-portrait' : 'tablet-portrait';
+        } else if (safeWidth <= 960 || shortSide <= 500) {
+            profileKey = 'mobile-landscape';
+        } else if (safeWidth <= 1366 && (hasTouchInput || shortSide <= 900)) {
+            profileKey = 'tablet-landscape';
+        }
+
+        const model = VIEWPORT_SCALE_MODEL[profileKey] || VIEWPORT_SCALE_MODEL['desktop-landscape'];
+        const baseScale = Math.min(
+            safeWidth / model.baseResolution.width,
+            safeHeight / model.baseResolution.height
+        );
+        const viewportScale = Phaser.Math.Clamp(baseScale, model.scaleClamp.min, model.scaleClamp.max);
+
+        return {
+            width: safeWidth,
+            height: safeHeight,
+            shortSide,
+            longSide,
+            orientation,
+            isPortrait: orientation === 'portrait',
+            profileKey,
+            deviceType: profileKey.split('-')[0],
+            scale: viewportScale,
+            ...model
+        };
     }
 
     generateTicketId() {
@@ -1394,15 +1619,38 @@ export class MainScene extends Phaser.Scene {
         
         const w = size.width;
         const h = size.height;
-        const isPortrait = h > w;
-        const isMobilePortrait = isPortrait && w <= 900;
-        const sidePadding = isPortrait ? 10 : 16;
+        const viewportProfile = this.getViewportScaleProfile(w, h);
+        const isPortrait = viewportProfile.isPortrait;
+        const isMobilePortrait = viewportProfile.profileKey === 'mobile-portrait';
+        const isTabletPortrait = viewportProfile.profileKey === 'tablet-portrait';
+        const isMobileLandscape = viewportProfile.profileKey === 'mobile-landscape';
+        const isTabletLandscape = viewportProfile.profileKey === 'tablet-landscape';
+        const thresholds = viewportProfile.thresholds;
+        const sidePadding = isPortrait
+            ? viewportProfile.layout.sidePaddingPortrait
+            : viewportProfile.layout.sidePaddingLandscape;
         const hudRightReserve = isPortrait
-            ? (isMobilePortrait ? 66 : 10)
-            : Math.round(Math.max(88, Math.min(132, w * 0.10)));
+            ? viewportProfile.layout.hudRightReservePortrait
+            : Math.round(
+                Math.max(
+                    viewportProfile.layout.hudRightReserveLandscapeMin,
+                    Math.min(
+                        viewportProfile.layout.hudRightReserveLandscapeMax,
+                        w * viewportProfile.layout.hudRightReserveLandscapeRatio
+                    )
+                )
+            );
         const contentLeft = sidePadding;
         const contentRight = Math.max(contentLeft + 240, w - hudRightReserve - sidePadding);
         const contentWidth = Math.max(240, contentRight - contentLeft);
+        const lobbyScaleFactor = Phaser.Math.Clamp(viewportProfile.scale * viewportProfile.sections.lobby, 0.72, 1.12);
+        const shopScaleFactor = Phaser.Math.Clamp(viewportProfile.scale * viewportProfile.sections.shop, 0.72, 1.12);
+        const shopCardsScaleFactor = Phaser.Math.Clamp(viewportProfile.scale * viewportProfile.sections.shopCards, 0.72, 1.14);
+        const shopResultScaleFactor = Phaser.Math.Clamp(viewportProfile.scale * viewportProfile.sections.shopResult, 0.72, 1.12);
+        const gameBoardScaleFactor = Phaser.Math.Clamp(viewportProfile.scale * viewportProfile.sections.gameBoard, 0.74, 1.0);
+        const gameInfoScaleFactor = Phaser.Math.Clamp(viewportProfile.scale * viewportProfile.sections.gameInfo, 0.72, 1.06);
+        const gameControlsScaleFactor = Phaser.Math.Clamp(viewportProfile.scale * viewportProfile.sections.gameControls, 0.7, 1.04);
+        const shopTitleScaleFactor = Phaser.Math.Clamp(viewportProfile.scale * viewportProfile.sections.shopTitle, 0.8, 1.1);
         let jackpotHandled = false;
         const hasJackpot = this.layerJackpot && this.jackpotUI && this.jackpotUI.hasVisuals();
         const jackpotAspect = hasJackpot ? this.jackpotUI.getAspect() : 1.5;
@@ -1442,10 +1690,10 @@ export class MainScene extends Phaser.Scene {
             );
 
             let titleWorldY = lobbyJackpot ? (lobbyJackpot.bottom + (isPortrait ? 26 : 24)) : (isPortrait ? h * 0.24 : h * 0.20);
-            this.lobbyTitle.setPosition(0, titleWorldY - (h / 2.3));
+            this.lobbyTitle.setPosition(0, titleWorldY - (h / 2));
 
             if (isPortrait) {
-                let scaleBtn = Phaser.Math.Clamp((contentWidth * 0.90) / 480, 0.68, 1.0);
+                let scaleBtn = Phaser.Math.Clamp(((contentWidth * 0.90) / 480) * lobbyScaleFactor, 0.62, 1.08);
                 let btnComprarY = titleWorldY + 130;
                 let btnJugarY = btnComprarY + 145;
                 const buttonBottom = btnJugarY + (60 * scaleBtn);
@@ -1470,7 +1718,7 @@ export class MainScene extends Phaser.Scene {
                 const fitScaleHorizontal = (maxButtonPairWidth - buttonGap) / (buttonBaseWidth * 2);
 
                 if (fitScaleHorizontal < 0.45) {
-                    const scaleBtn = Phaser.Math.Clamp((contentWidth * 0.90) / buttonBaseWidth, 0.58, 0.95);
+                    const scaleBtn = Phaser.Math.Clamp(((contentWidth * 0.90) / buttonBaseWidth) * lobbyScaleFactor, 0.52, 1.0);
                     let btnComprarY = titleWorldY + 120;
                     let btnJugarY = btnComprarY + (140 * scaleBtn);
                     const buttonBottom = btnJugarY + (60 * scaleBtn);
@@ -1488,10 +1736,10 @@ export class MainScene extends Phaser.Scene {
                     this.btnLobbyComprar.setScale(scaleBtn);
                     this.btnLobbyJugar.setScale(scaleBtn);
                 } else {
-                    const scaleBtn = Phaser.Math.Clamp(fitScaleHorizontal, 0.45, 1.08);
+                    const scaleBtn = Phaser.Math.Clamp(fitScaleHorizontal * lobbyScaleFactor, 0.45, 1.08);
                     const buttonWidth = buttonBaseWidth * scaleBtn;
                     const separation = (buttonWidth / 2) + (buttonGap / 2);
-                    let buttonY = titleWorldY + 145;
+                    let buttonY = titleWorldY + 50;
                     const buttonBottom = buttonY + (60 * scaleBtn);
                     if (buttonBottom > (h - 24)) {
                         const shiftUp = buttonBottom - (h - 24);
@@ -1517,11 +1765,12 @@ export class MainScene extends Phaser.Scene {
             const centerY = h / 2;
             const safeTop = isPortrait ? 10 : 12;
             const shopBottomInset = isPortrait ? this.getBottomSystemInset() : 0;
-            const shopBottomReserve = isMobilePortrait
-                ? Phaser.Math.Clamp(58 + Math.max(0, shopBottomInset), 58, 140)
+            const shopBottomReserveBase = isMobilePortrait ? 58 : (isTabletPortrait ? 44 : 12);
+            const shopBottomReserve = isPortrait
+                ? Phaser.Math.Clamp(shopBottomReserveBase + Math.max(0, shopBottomInset), shopBottomReserveBase, 160)
                 : 12;
-            const isShortLandscapeShop = !isPortrait && h <= 430;
-            const spacing = isPortrait ? 12 : (isShortLandscapeShop ? 8 : 14);
+            const isShortLandscapeShop = !isPortrait && h <= thresholds.shortLandscapeShopMaxH;
+            const spacing = Math.round((isPortrait ? 12 : (isShortLandscapeShop ? 8 : 14)) * Phaser.Math.Clamp(shopScaleFactor, 0.86, 1.06));
             const actualCols = this.getShopGridCols(this.shopQty, isPortrait);
             if (this.currentShopCols !== actualCols) {
                 this.drawShopCards(this.shopQty);
@@ -1530,25 +1779,27 @@ export class MainScene extends Phaser.Scene {
             const { cardW: shopCardW, cardH: shopCardH, pad: shopCardPad } = this.getShopCardMetrics(this.shopQty, isPortrait);
             const gridW = (actualCols * shopCardW) + ((actualCols - 1) * shopCardPad);
             const gridH = (rows * shopCardH) + ((rows - 1) * shopCardPad);
-            const splitPortraitShopInfo = isPortrait && w >= 520;
-            const isNarrowLandscapeShop = !isPortrait && w <= 1100;
+            const splitPortraitShopInfo = isPortrait && w >= (isTabletPortrait ? 640 : 520);
+            const isNarrowLandscapeShop = !isPortrait && w <= (isMobileLandscape ? 980 : (isTabletLandscape ? 1200 : 1100));
             const landscapeShopShiftX = !isPortrait
                 ? (isNarrowLandscapeShop
                     ? shopLayoutWidth * 0.10
                     : 0)
                 : 0;
-            const leftScale = isPortrait
+            const leftScaleBase = isPortrait
                 ? Phaser.Math.Clamp(shopLayoutWidth / 540, 0.78, 1.05)
                 : (isShortLandscapeShop
                     ? Phaser.Math.Clamp(Math.min(shopLayoutWidth * 0.38, h * 0.33) / 200, 0.62, 0.90)
                     : Phaser.Math.Clamp(Math.min(shopLayoutWidth * 0.42, h * 0.46) / 200, 0.82, 1.10));
+            const leftScale = Phaser.Math.Clamp(leftScaleBase * shopScaleFactor, isPortrait ? 0.62 : 0.54, 1.12);
             const useCompactInfoScale = isNarrowLandscapeShop || splitPortraitShopInfo;
             const rightScale = leftScale * (isShortLandscapeShop ? 0.68 : (useCompactInfoScale ? 0.78 : 1));
 
             if (this.shopTitlePaquetes) {
-                const titleSize = isPortrait
-                    ? (isMobilePortrait ? '26px' : '32px')
-                    : (isShortLandscapeShop ? '22px' : ((!isPortrait && isNarrowLandscapeShop) ? '26px' : '32px'));
+                const baseTitlePx = isPortrait
+                    ? (isMobilePortrait ? 26 : 32)
+                    : (isShortLandscapeShop ? 22 : ((!isPortrait && isNarrowLandscapeShop) ? 26 : 32));
+                const titleSize = `${Math.round(baseTitlePx * shopTitleScaleFactor)}px`;
                 if (this.shopTitlePaquetes.style.fontSize !== titleSize) {
                     this.shopTitlePaquetes.setFontSize(titleSize);
                 }
@@ -1564,9 +1815,10 @@ export class MainScene extends Phaser.Scene {
             const shopResultX = isPortrait
                 ? (splitPortraitShopInfo ? shopLayoutWidth * 0.22 : 0)
                 : 0;
-            const shopResultScale = isPortrait
+            const shopResultScaleBase = isPortrait
                 ? Phaser.Math.Clamp(leftScale * (splitPortraitShopInfo ? 0.92 : 0.86), 0.62, 0.9)
                 : (isNarrowLandscapeShop ? 0.82 : 1);
+            const shopResultScale = Phaser.Math.Clamp(shopResultScaleBase * shopResultScaleFactor, 0.58, 1.04);
             const resultHalfHeight = 52 * shopResultScale;
 
             if (this.shopTotalWinBox && this.shopTotalWinBox.container) {
@@ -1591,8 +1843,8 @@ export class MainScene extends Phaser.Scene {
                 flowY = topLeftYWorld + ((isMobilePortrait ? 68 : topLeftBottom) * leftScale) + spacing;
 
                 const portraitRightScale = isMobilePortrait
-                    ? Phaser.Math.Clamp(rightScale, 0.56, 0.76)
-                    : rightScale;
+                    ? Phaser.Math.Clamp(rightScale * gameControlsScaleFactor, 0.56, 0.78)
+                    : Phaser.Math.Clamp(rightScale * gameControlsScaleFactor, 0.66, 1.04);
                 const topRightYWorld = flowY + ((isMobilePortrait ? 98 : topRightTop) * portraitRightScale);
                 const portraitBetX = 0;
                 this.shopTopRight.setPosition(portraitBetX, topRightYWorld - centerY);
@@ -1625,6 +1877,7 @@ export class MainScene extends Phaser.Scene {
             const cardScaleCap = isShortLandscapeShop ? 1.08 : 1.2;
             const maxH = Math.max(h - cardsStartY - shopBottomReserve, 20);
             let cardScale = Math.min(maxW / gridW, cardScaleCap);
+            cardScale = Math.min(cardScale * shopCardsScaleFactor, cardScaleCap);
             if (!isPortrait) {
                 const cardScaleRaw = Math.min(cardScale, maxH / gridH);
                 cardScale = isShortLandscapeShop ? (cardScaleRaw * 0.92) : cardScaleRaw;
@@ -1719,17 +1972,19 @@ export class MainScene extends Phaser.Scene {
                 ? placeJackpot(w / 2, 8, Math.min(w * 0.78, 640), 0.22)
                 : null;
 
-            const isCompactPortraitHud = w <= 720 || h <= 900;
-            const isVeryCompactPortraitHud = w <= 460 || h <= 760;
-            const isMidPortraitHud = w >= 722 && w <= 900;
-            const infoScale = isCompactPortraitHud
+            const isCompactPortraitHud = w <= thresholds.compactPortraitMaxW || h <= thresholds.compactPortraitMaxH;
+            const isVeryCompactPortraitHud = w <= thresholds.veryCompactPortraitMaxW || h <= thresholds.veryCompactPortraitMaxH;
+            const isMidPortraitHud = w >= thresholds.midPortraitMinW && w <= thresholds.midPortraitMaxW;
+            const infoScaleBase = isCompactPortraitHud
                 ? Phaser.Math.Clamp(w / 760, 0.54, 0.72)
                 : Phaser.Math.Clamp(w / 420, 0.82, 0.96);
-            const controlsScale = isCompactPortraitHud
+            const infoScale = Phaser.Math.Clamp(infoScaleBase * gameInfoScaleFactor, 0.48, 0.98);
+            const controlsScaleBase = isCompactPortraitHud
                 ? (isVeryCompactPortraitHud
                     ? Phaser.Math.Clamp(w / 860, 0.46, 0.60)
                     : Phaser.Math.Clamp(w / 800, 0.50, 0.66))
-                : infoScale;
+                : infoScaleBase;
+            const controlsScale = Phaser.Math.Clamp(controlsScaleBase * gameControlsScaleFactor, 0.44, 0.96);
 
             const baseContWinY = isCompactPortraitHud
                 ? h * (isVeryCompactPortraitHud ? 0.64 : 0.66)
@@ -1762,7 +2017,9 @@ export class MainScene extends Phaser.Scene {
 
             const gameBottom = contWinY - 70;
             const availableGameHeight = Math.max(190, gameBottom - gameTop);
-            const scaleGame = Math.min((w * (isMidPortraitHud ? 0.99 : 0.96)) / CONFIG_GAME.reelTotalWidth, availableGameHeight / CONFIG_GAME.reelTotalHeight);
+            const portraitWidthFactor = isMidPortraitHud ? 0.99 : 0.96;
+            const baseScaleGame = Math.min((w * portraitWidthFactor) / CONFIG_GAME.reelTotalWidth, availableGameHeight / CONFIG_GAME.reelTotalHeight);
+            const scaleGame = Math.min(baseScaleGame, baseScaleGame * gameBoardScaleFactor);
             const gameCenterY = gameTop + (availableGameHeight / 2);
 
             this.layerGame.setPosition(w / 2, gameCenterY);
@@ -1786,18 +2043,18 @@ export class MainScene extends Phaser.Scene {
             this.uiElements.manualControlsGroup.setPosition(w / 2, controlsY);
             this.uiElements.manualControlsGroup.setScale(controlsScale);
         } else {
-            const isMidLandscapeGame = w >= 722 && w <= 900;
-            const isShortLandscapeGame = h <= 520;
-            const isVeryShortLandscapeGame = h <= 430;
+            const isMidLandscapeGame = w >= thresholds.midLandscapeMinW && w <= thresholds.midLandscapeMaxW;
+            const isShortLandscapeGame = h <= thresholds.shortLandscapeGameMaxH;
+            const isVeryShortLandscapeGame = h <= thresholds.veryShortLandscapeGameMaxH;
             const isReplayLandscape = this.isReplayMode === true;
-            const gameAreaBaseFactor = isMidLandscapeGame ? 0.72 : 0.68;
+            const gameAreaBaseFactor = (isMidLandscapeGame ? 0.72 : 0.68) * Phaser.Math.Clamp(gameBoardScaleFactor, 0.9, 1);
             const gameAreaFactor = isReplayLandscape
                 ? Phaser.Math.Clamp(gameAreaBaseFactor - 0.06, 0.60, 0.68)
                 : gameAreaBaseFactor;
             const gameAreaWidth = contentWidth * gameAreaFactor;
             const panelAreaWidth = contentWidth - gameAreaWidth;
             const panelX = contentLeft + gameAreaWidth + (panelAreaWidth * 0.50);
-            const isWideLandscapeGame = w >= 1200;
+            const isWideLandscapeGame = w >= thresholds.wideLandscapeMinW;
             const isNarrowLandscapeGame = !isWideLandscapeGame && (w < 1200 || panelAreaWidth < 320);
             const jackpotBaseWidthGame = isNarrowLandscapeGame
                 ? Math.min(Math.max(panelAreaWidth * 2.0, contentWidth * 0.52), 640)
@@ -1821,10 +2078,11 @@ export class MainScene extends Phaser.Scene {
             const boardTopReserve = (isWideLandscapeGame ? gameVerticalMargin : jackpotClearTop) + replayTopReserve;
             const maxGameHeight = Math.max(180, h - gameVerticalMargin - boardTopReserve);
             const replayWidthScaleCap = isReplayLandscape ? 0.85 : 1;
-            const scaleGame = Math.min(
+            const scaleGameBase = Math.min(
                 (gameAreaWidth * 0.97 * replayWidthScaleCap) / CONFIG_GAME.reelTotalWidth,
                 maxGameHeight / CONFIG_GAME.reelTotalHeight
             );
+            const scaleGame = Math.min(scaleGameBase, scaleGameBase * gameBoardScaleFactor);
             const gameWidthWorld = CONFIG_GAME.reelTotalWidth * scaleGame;
             const gameHeightWorld = CONFIG_GAME.reelTotalHeight * scaleGame;
             const gameXMin = contentLeft + (gameWidthWorld / 2);
@@ -1864,10 +2122,20 @@ export class MainScene extends Phaser.Scene {
                 0.46,
                 isShortLandscapeGame ? (isVeryShortLandscapeGame ? 0.76 : 0.86) : 1.02
             );
-            const contWinScale = Phaser.Math.Clamp(
+            panelScale = Phaser.Math.Clamp(
+                panelScale * gameControlsScaleFactor,
+                0.44,
+                isShortLandscapeGame ? (isVeryShortLandscapeGame ? 0.76 : 0.86) : 1.02
+            );
+            const contWinScaleBase = Phaser.Math.Clamp(
                 Math.min(Phaser.Math.Clamp(panelAreaWidth / 300, 0.74, 1.0), fitResultScale),
                 isShortLandscapeGame ? 0.48 : 0.52,
                 isShortLandscapeGame ? 0.86 : 1.0
+            );
+            const contWinScale = Phaser.Math.Clamp(
+                contWinScaleBase * gameInfoScaleFactor,
+                isShortLandscapeGame ? 0.46 : 0.5,
+                isShortLandscapeGame ? 0.9 : 1.02
             );
             const contWinYBase = gameJackpot ? Math.min(h * 0.56, gameJackpot.bottom + 64) : (h * 0.45);
             let contWinY = isMidLandscapeGame
@@ -1956,7 +2224,7 @@ export class MainScene extends Phaser.Scene {
         if (this.maskShape) { this.maskShape.setPosition(this.layerGame.x, this.layerGame.y); this.maskShape.setScale(this.layerGame.scaleX, this.layerGame.scaleY); }
         if (this.layerTopText) { this.layerTopText.setPosition(this.layerGame.x, this.layerGame.y); this.layerTopText.setScale(this.layerGame.scaleX, this.layerGame.scaleY); }
         if (this.lblTicket) {
-            const isShortLandscapeHud = !isPortrait && h <= 520;
+            const isShortLandscapeHud = !isPortrait && h <= thresholds.shortLandscapeGameMaxH;
             const ticketX = isPortrait
                 ? (w - 15)
                 : (isShortLandscapeHud ? (contentLeft + (contentWidth * 0.64)) : (contentRight - 10));
@@ -1965,7 +2233,7 @@ export class MainScene extends Phaser.Scene {
 
         if (window.setHudDockTop) {
             let hudDockTop = null;
-            if (isMobilePortrait) {
+            if (isMobilePortrait || isTabletPortrait) {
                 const hudBtnSize = 38;
                 const hudGap = 6;
                 const hudCount = 5;
@@ -1977,7 +2245,7 @@ export class MainScene extends Phaser.Scene {
                     hudDockTop = Math.round(Phaser.Math.Clamp(boardBottom + 12, 8, maxTop));
                 } else if (this.layerShop && this.layerShop.visible) {
                     // En tienda se ancla arriba para no tapar la grilla de tickets.
-                    hudDockTop = Math.round(Phaser.Math.Clamp(160, 8, maxTop));
+                    hudDockTop = Math.round(Phaser.Math.Clamp(viewportProfile.layout.hudDockTopShop, 8, maxTop));
                 } else if (this.layerLobby && this.layerLobby.visible && this.btnLobbyJugar) {
                     const playBottom = this.btnLobbyJugar.getBounds().bottom;
                     hudDockTop = Math.round(Phaser.Math.Clamp(playBottom + 12, 8, maxTop));
