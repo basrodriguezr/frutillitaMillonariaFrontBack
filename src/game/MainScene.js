@@ -200,11 +200,51 @@ const VIEWPORT_SCALE_MODEL = {
 // en una resolucion afecte a otras.
 const VIEWPORT_RESOLUTION_OVERRIDES = {
     // Ejemplo vertical (iPhone 14 Pro Max en devtools): 430 x 932
+   '344x882': {
+        lobby: {
+            titleGapFromJackpot: 100
+        }
+    },
+    '360x740': {
+        lobby: {
+            titleGapFromJackpot: 100
+        }
+    },
+    '375x667': {
+        lobby: {
+            titleGapFromJackpot: 100
+        }
+    },
+   '390x844': {
+        lobby: {
+            titleGapFromJackpot: 100
+        }
+    },
+   '412x914': {
+        lobby: {
+            titleGapFromJackpot: 100
+        }
+    },
+   '414x896': {
+        lobby: {
+            titleGapFromJackpot: 100
+        }
+    },
+   '412x915': {
+        lobby: {
+            titleGapFromJackpot: 100
+        }
+    },
     '430x932': {
         lobby: {
             titleGapFromJackpot: 100
         }
     },
+    '540x720': {
+        lobby: {
+            titleGapFromJackpot: 100
+        }
+    },    
     // Ejemplo horizontal del mismo equipo: 932 x 430
     '932x430': {
         lobby: {}
