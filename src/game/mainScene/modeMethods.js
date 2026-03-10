@@ -231,6 +231,17 @@ function setupManualModeView(scene) {
 }
 
 /**
+ * Indica si los títulos `TICKET n` deben mostrarse según tipo de dispositivo.
+ * Parámetros:
+ * - `scene` (object): Instancia de la escena principal.
+ */
+function shouldShowTicketTags(scene) {
+    if (!scene || typeof scene.getViewportScaleProfile !== 'function') return false;
+    const profile = scene.getViewportScaleProfile(scene.scale.width, scene.scale.height);
+    return profile?.deviceType === 'desktop';
+}
+
+/**
  * Indica si existe un pack manual pendiente por continuar.
  * No requiere parámetros.
  */
@@ -292,7 +303,7 @@ export function startAutoReveal(qty, totalCost) {
             card.ticketId = this.generateTicketId();
             if (card.ticketTag) {
                 card.ticketTag.setText(`TICKET ${i + 1}`);
-                card.ticketTag.setVisible(true);
+                card.ticketTag.setVisible(shouldShowTicketTags(this));
             }
 
             this.time.delayedCall(i * 280, () => {

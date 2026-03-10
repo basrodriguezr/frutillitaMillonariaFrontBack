@@ -394,6 +394,14 @@ export function applyShopLayout({
         }
         scene.shopCardsContainer.setPosition(cardsShiftX, cardsYWorld - centerY);
         scene.shopCardsContainer.setScale(cardScale);
+        const showTicketTags = !isMobilePortrait && !isTabletPortrait && !isMobileLandscape && !isTabletLandscape;
+        if (Array.isArray(scene.shopCards)) {
+            scene.shopCards.forEach((card) => {
+                if (!card?.ticketTag) return;
+                const hasRevealedData = Boolean(card.replayData);
+                card.ticketTag.setVisible(showTicketTags && hasRevealedData);
+            });
+        }
 
         let totalWinYWorld;
         if (isPortrait) {

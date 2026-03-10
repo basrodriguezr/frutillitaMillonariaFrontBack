@@ -108,7 +108,18 @@ export function drawShopCards(qty) {
         const rows = Math.ceil(qty / actualCols);
         const visualCols = !isPortrait && qty === 5 ? 10 : actualCols;
         const { cardW, cardH, pad } = this.getShopCardMetrics(qty, isPortrait);
-        const contentMetrics = this.getShopCardContentMetrics(cardW, cardH);
+        const baseContentMetrics = this.getShopCardContentMetrics(cardW, cardH);
+        const isQty20 = qty >= 20;
+        const contentMetrics = isQty20
+            ? {
+                ...baseContentMetrics,
+                hiddenFont: Math.round(baseContentMetrics.hiddenFont * 1.12),
+                winFont: Math.round(baseContentMetrics.winFont * 1.12),
+                loseFont: Math.round(baseContentMetrics.loseFont * 1.1),
+                minWinFont: Math.round(baseContentMetrics.minWinFont * 1.1),
+                verBtnFont: Math.round(baseContentMetrics.verBtnFont * 1.1)
+            }
+            : baseContentMetrics;
         const totalW = (visualCols * cardW) + ((visualCols - 1) * pad);
         const totalH = (rows * cardH) + ((rows - 1) * pad);
         const startX = -totalW / 2 + cardW / 2;
