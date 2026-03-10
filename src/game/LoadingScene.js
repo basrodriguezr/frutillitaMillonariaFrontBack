@@ -3,26 +3,46 @@ import logoAsset from '../assets/logo.webp';
 import pozoAsset from '../assets/pozo.webp';
 
 export class BootScene extends Phaser.Scene {
+    /**
+     * Inicializa la escena de arranque y define su clave de registro.
+     * No requiere parámetros.
+     */
     constructor() {
         super({ key: 'BootScene' });
     }
 
+    /**
+     * Precarga recursos mínimos usados por la pantalla de carga.
+     * No requiere parámetros.
+     */
     preload() {
         if (!this.textures.exists('loading_logo')) {
             this.load.image('loading_logo', logoAsset);
         }
     }
 
+    /**
+     * Transiciona desde arranque hacia la escena de carga principal.
+     * No requiere parámetros.
+     */
     create() {
         this.scene.start('LoadingScene');
     }
 }
 
 export class LoadingScene extends Phaser.Scene {
+    /**
+     * Inicializa la escena de carga y define su clave de registro.
+     * No requiere parámetros.
+     */
     constructor() {
         super({ key: 'LoadingScene' });
     }
 
+    /**
+     * Construye UI de progreso, carga assets principales y abre la escena de juego.
+     * No requiere parámetros.
+     */
     create() {
         const w = this.scale.width;
         const h = this.scale.height;
@@ -55,6 +75,11 @@ export class LoadingScene extends Phaser.Scene {
             fontStyle: 'bold'
         }).setOrigin(0.5);
 
+        /**
+         * Actualiza la barra y etiqueta de progreso.
+         * Parámetros:
+         * - `value` (number): Progreso normalizado entre `0` y `1`.
+         */
         const updateProgress = (value) => {
             const progress = Phaser.Math.Clamp(value, 0, 1);
             const fillWidth = (barWidth - 6) * progress;
@@ -66,6 +91,10 @@ export class LoadingScene extends Phaser.Scene {
             loadingLabel.setText(`Cargando ${Math.round(progress * 100)}%`);
         };
 
+        /**
+         * Inicia transición segura a `MainScene` respetando el tiempo mínimo de carga.
+         * No requiere parámetros.
+         */
         const goToMainScene = () => {
             if (didTransition) return;
             didTransition = true;

@@ -6,6 +6,10 @@ export default function PhaserGame() {
   const gameRef = useRef(null);
 
   useEffect(() => {
+    /**
+     * Obtiene el tamaño real del viewport priorizando `visualViewport`.
+     * No requiere parámetros.
+     */
     const getViewportSize = () => {
       const vv = window.visualViewport;
       if (vv && Number.isFinite(vv.width) && Number.isFinite(vv.height)) {
@@ -20,6 +24,10 @@ export default function PhaserGame() {
       };
     };
 
+    /**
+     * Fuerza un resize de Phaser al tamaño actual del viewport.
+     * No requiere parámetros.
+     */
     const forceResize = () => {
       const game = gameRef.current;
       if (!game) return;
@@ -29,10 +37,23 @@ export default function PhaserGame() {
       game.scale.refresh();
     };
 
+    /**
+     * Reaplica resize con delay para estabilizar orientación en móviles.
+     * No requiere parámetros.
+     */
     const handleOrientationChange = () => {
       // En móviles/devtools el viewport final se estabiliza unos ms después de rotar.
       setTimeout(forceResize, 60);
       setTimeout(forceResize, 180);
+    };
+
+    /**
+     * Reaplica resize al entrar/salir de fullscreen en móviles.
+     * No requiere parámetros.
+     */
+    const handleFullscreenChange = () => {
+      setTimeout(forceResize, 40);
+      setTimeout(forceResize, 140);
     };
 
     // Asegurarse de que la fuente esté lista antes de iniciar Phaser
@@ -57,6 +78,8 @@ export default function PhaserGame() {
     const vv = window.visualViewport;
     window.addEventListener('resize', forceResize);
     window.addEventListener('orientationchange', handleOrientationChange);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
     if (vv) {
       vv.addEventListener('resize', forceResize);
       vv.addEventListener('scroll', forceResize);
@@ -65,6 +88,8 @@ export default function PhaserGame() {
     return () => {
       window.removeEventListener('resize', forceResize);
       window.removeEventListener('orientationchange', handleOrientationChange);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
       if (vv) {
         vv.removeEventListener('resize', forceResize);
         vv.removeEventListener('scroll', forceResize);

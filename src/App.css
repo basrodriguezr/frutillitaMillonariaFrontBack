@@ -458,7 +458,7 @@ canvas {
 
 .buy-options-layout {
   display: flex;
-  gap: 15px;
+  gap: 22px;
   flex-direction: row;
 }
 
@@ -641,10 +641,6 @@ canvas {
   color: #ffffff;
 }
 
-.settings-speed-btn-turbo.is-active {
-  background: var(--accent-green);
-}
-
 .settings-speed-icon {
   margin-left: 4px;
 }
@@ -746,11 +742,6 @@ canvas {
   );
 }
 
-.volume-range-master {
-  --vol-fill: #58a6ff;
-  --vol-value: var(--vol-master);
-}
-
 .volume-range-music {
   --vol-fill: #9b7eff;
   --vol-value: var(--vol-music);
@@ -788,11 +779,20 @@ canvas {
 
 .modal-alert-buy,
 .modal-alert-summary {
-  width: min(100%, 500px);
-  max-width: 500px;
   background: #0a0e17;
   border-color: #333333;
   padding: 30px;
+}
+
+.modal-alert-buy {
+  width: min(96vw, 760px);
+  max-width: 760px;
+  padding: 36px;
+}
+
+.modal-alert-summary {
+  width: min(100%, 500px);
+  max-width: 500px;
 }
 
 .modal-alert-pending {
