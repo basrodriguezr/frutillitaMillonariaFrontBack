@@ -222,8 +222,8 @@ export function endSpin(totalWin, winGroups) {
                 this.finishManualSpin(0);
             } else if(this.isReplayMode) {
                 this.uiElements.spinBtn.setVisible(true); 
-                this.uiElements.btnMinus.setVisible(true);
-                this.uiElements.btnPlus.setVisible(true);
+                this.uiElements.btnMinus.setVisible(false);
+                this.uiElements.btnPlus.setVisible(false);
             } else {
                 this.uiElements.spinBtn.setVisible(true); 
                 this.uiElements.btnMinus.setVisible(true);
@@ -309,8 +309,8 @@ export function playSequentialWins(winGroups) {
                     this.finishManualSpin(this.accumulatedWin);
                 } else if(this.isReplayMode) {
                     this.uiElements.spinBtn.setVisible(true); 
-                    this.uiElements.btnMinus.setVisible(true);
-                    this.uiElements.btnPlus.setVisible(true);
+                    this.uiElements.btnMinus.setVisible(false);
+                    this.uiElements.btnPlus.setVisible(false);
                 } else {
                     this.uiElements.spinBtn.setVisible(true); 
                     this.uiElements.btnMinus.setVisible(true);

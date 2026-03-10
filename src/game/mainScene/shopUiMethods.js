@@ -136,7 +136,9 @@ export function drawShopCards(qty) {
             const ticketYOffset = (isMobilePortrait || r === 0)
                 ? -((cardH / 2) + ticketOffset)
                 : ((cardH / 2) + ticketOffset);
-            const ticketFont = Math.max(10, Math.round(contentMetrics.hiddenFont * 0.45));
+            const ticketFont = isMobilePortrait
+                ? Math.max(8, Math.round(contentMetrics.hiddenFont * 0.4))
+                : Math.max(10, Math.round(contentMetrics.hiddenFont * 0.45));
             const ticketTag = this.add
                 .text(0, ticketYOffset, `TICKET ${i + 1}`, {
                     fontFamily: 'Luckiest Guy, Arial',
@@ -158,7 +160,6 @@ export function drawShopCards(qty) {
             this.shopCardsContainer.add(card);
             this.shopCards.push(card);
         }
-
     }
 
 /**

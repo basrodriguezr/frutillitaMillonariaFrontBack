@@ -370,13 +370,13 @@ export class MainScene extends Phaser.Scene {
         }
         const isMobilePortrait = this.scale.width <= 520;
         if (qty >= 20) {
-            return { cardW: 45, cardH: 50, pad: isMobilePortrait ? 18 : 8 };
+            return { cardW: 44, cardH: 48, pad: isMobilePortrait ? 12 : 8 };
         }
         if (qty >= 15) {
-            return { cardW: 50, cardH: 70, pad: isMobilePortrait ? 12 : 5 };
+            return { cardW: 50, cardH: 64, pad: isMobilePortrait ? 10 : 5 };
         }
         if (qty >= 10 && isMobilePortrait) {
-            return { cardW: 100, cardH: 140, pad: 16 };
+            return { cardW: 82, cardH: 116, pad: 12 };
         }
         return { cardW: 100, cardH: 140, pad: 10 };
     }

@@ -599,9 +599,9 @@ export function setupReplay(configData, source) {
         this.uiElements.controlsGroup.setVisible(true);
         this.uiElements.manualControlsGroup.setVisible(false);
         this.uiElements.replayControlsGroup.setVisible(false);
-        this.uiElements.btnMinus.setVisible(true);
+        this.uiElements.btnMinus.setVisible(false);
         this.uiElements.spinBtn.setVisible(true);
-        this.uiElements.btnPlus.setVisible(true);
+        this.uiElements.btnPlus.setVisible(false);
         if (this.uiElements.spinBtnLabel) {
             this.uiElements.spinBtnLabel
                 .setText('↺')

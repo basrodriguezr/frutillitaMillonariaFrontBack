@@ -119,7 +119,20 @@ export function applyShopLayout({
             portraitRightScaleMobileMax: 0.78,
             portraitRightScaleDefaultMin: 0.66,
             portraitRightScaleDefaultMax: 1.04,
-            mobileTopRightTop: 98,
+            mobileTopRightTop: 122,
+            mobileTopRightXShift: -42,
+            mobileBuyX: -116,
+            mobileBuyY: -74,
+            mobileBetMinusX: 104,
+            mobileBetPlusX: 284,
+            mobileBetRowY: -94,
+            mobileBetInfoX: 194,
+            mobileBetInfoY: -94,
+            mobileBetInfoFontPx: 18,
+            mobileBetControlsScale: 0.86,
+            mobileTotalX: 194,
+            mobileTotalY: -36,
+            mobileTotalFontPx: 20,
             resultGapTopMobileBase: 10,
             resultGapTopSplitBase: 8,
             resultGapTopDefaultBase: 14,
@@ -286,7 +299,28 @@ export function applyShopLayout({
                 ? Phaser.Math.Clamp(rightScale * gameControlsScaleFactor, shopCfg.portraitRightScaleMobileMin, shopCfg.portraitRightScaleMobileMax)
                 : Phaser.Math.Clamp(rightScale * gameControlsScaleFactor, shopCfg.portraitRightScaleDefaultMin, shopCfg.portraitRightScaleDefaultMax);
             const topRightYWorld = flowY + ((isMobilePortrait ? shopCfg.mobileTopRightTop : topRightTop) * portraitRightScale);
-            const portraitBetX = 0;
+            if (isMobilePortrait) {
+                scene.btnBuyShopContainer.setPosition(shopCfg.mobileBuyX, shopCfg.mobileBuyY);
+                scene.btnShopMinus.setPosition(shopCfg.mobileBetMinusX, shopCfg.mobileBetRowY);
+                scene.btnShopMinus.setScale(shopCfg.mobileBetControlsScale);
+                scene.lblShopBetInfo.setPosition(shopCfg.mobileBetInfoX, shopCfg.mobileBetInfoY);
+                scene.lblShopBetInfo.setFontSize(`${shopCfg.mobileBetInfoFontPx}px`);
+                scene.btnShopPlus.setPosition(shopCfg.mobileBetPlusX, shopCfg.mobileBetRowY);
+                scene.btnShopPlus.setScale(shopCfg.mobileBetControlsScale);
+                scene.lblShopTotal.setPosition(shopCfg.mobileTotalX, shopCfg.mobileTotalY);
+                scene.lblShopTotal.setFontSize(`${shopCfg.mobileTotalFontPx}px`);
+            } else {
+                scene.btnBuyShopContainer.setPosition(0, -74);
+                scene.btnShopMinus.setPosition(-110, 26);
+                scene.btnShopMinus.setScale(1);
+                scene.lblShopBetInfo.setPosition(0, 26);
+                scene.lblShopBetInfo.setFontSize('20px');
+                scene.btnShopPlus.setPosition(110, 26);
+                scene.btnShopPlus.setScale(1);
+                scene.lblShopTotal.setPosition(0, 86);
+                scene.lblShopTotal.setFontSize('24px');
+            }
+            const portraitBetX = isMobilePortrait ? shopCfg.mobileTopRightXShift : 0;
             scene.shopTopRight.setPosition(portraitBetX, topRightYWorld - centerY);
             scene.shopTopRight.setScale(portraitRightScale);
             controlsBottomYWorld = scene.shopTopRight.getBounds().bottom;
