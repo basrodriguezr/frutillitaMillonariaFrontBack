@@ -69,18 +69,18 @@ function formatHistoryDate(timestamp) {
     }).format(date);
 }
 
-function VolumeSlider({ label, value, setter, icon, isMuted }) {
+function VolumeSlider({ label, value, setter, icon, isMuted, tone }) {
     return (
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px', opacity: isMuted ? 0.4 : 1, pointerEvents: isMuted ? 'none' : 'auto', transition: 'opacity 0.2s' }}>
-            <i className={`ph ${icon}`} style={{ fontSize: '24px', color: 'var(--text-muted)', width: '30px' }}></i>
-            <div style={{ flexGrow: 1, padding: '0 15px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                    <span style={{ fontSize: '14px', color: 'white' }}>{label}</span>
-                    <span style={{ fontSize: '12px', color: 'var(--accent-blue)' }}>{value}%</span>
+        <div className={`volume-row ${isMuted ? 'is-muted' : ''}`}>
+            <i className={`ph ${icon} volume-icon`}></i>
+            <div className="volume-main">
+                <div className="volume-head">
+                    <span className="volume-label">{label}</span>
+                    <span className="volume-value">{value}%</span>
                 </div>
                 <input
                     type="range" min="0" max="100" value={value} onChange={(e) => setter(Number(e.target.value))}
-                    style={{ width: '100%', appearance: 'none', height: '6px', background: `linear-gradient(90deg, var(--accent-blue) ${value}%, #333 ${value}%)`, borderRadius: '3px', outline: 'none' }}
+                    className={`volume-range volume-range-${tone}`}
                 />
             </div>
         </div>
@@ -215,15 +215,28 @@ export default function SlotUI() {
         }
     };
     const hideRightHud = currentScreen === 'loading';
+    const isRightHudBlocked = isSpinning || hideRightHud;
+    const rightHudVisibilityClass = isRightHudBlocked ? 'hud-hidden' : 'hud-visible';
+    const isModalOpen = Boolean(activeTab || alertConfig || buyModalConfig || replayWarningConfig || summaryModalConfig || pendingSpinAlert);
+
+    useEffect(() => {
+        const root = document.documentElement;
+        if (typeof hudDockTop === 'number') {
+            root.style.setProperty('--hud-dock-top', `${hudDockTop}px`);
+        } else {
+            root.style.removeProperty('--hud-dock-top');
+        }
+        root.style.setProperty('--vol-master', `${masterVolume}%`);
+        root.style.setProperty('--vol-music', `${musicVolume}%`);
+        root.style.setProperty('--vol-sfx', `${sfxVolume}%`);
+    }, [hudDockTop, masterVolume, musicVolume, sfxVolume]);
 
     return (
-        <div id="ui-layer" style={{ pointerEvents: 'none' }}>
-            
-            <div 
-                className={`modal-overlay ${activeTab || alertConfig || buyModalConfig || replayWarningConfig || summaryModalConfig || pendingSpinAlert ? 'active' : ''}`} 
+        <div id="ui-layer">
+            <div
+                className={`modal-overlay ${isModalOpen ? 'active' : ''}`}
                 // --- MODIFICACIÓN: NO SE PUEDE CERRAR HACIENDO CLICK AFUERA SI HAY JUGADA PENDIENTE ---
                 onClick={pendingSpinAlert ? undefined : closeAll}
-                style={{ display: (activeTab || alertConfig || buyModalConfig || replayWarningConfig || summaryModalConfig || pendingSpinAlert) ? 'flex' : 'none', pointerEvents: 'auto' }} 
             >
                 {(activeTab) && (
                     <div className="modal-large" onClick={(e) => e.stopPropagation()}>
@@ -233,39 +246,39 @@ export default function SlotUI() {
                         </div>
                         <div className="modal-content-area">
                             {activeTab === 'history' && (
-                                <div className="tab-pane active" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                    <div style={{ overflowX: 'auto', flexGrow: 1 }}>
-                                        <table style={{ width: '100%', color: 'white', textAlign: 'left', borderCollapse: 'collapse', fontSize: '13px' }}>
+                                <div className="tab-pane active tab-pane-history">
+                                    <div className="history-table-wrap">
+                                        <table className="history-table">
                                             <thead>
-                                                <tr style={{ borderBottom: '1px solid #333', color: 'var(--text-muted)' }}>
-                                                    <th style={{ padding: '10px 5px' }}>Fecha</th>
-                                                    <th style={{ padding: '10px 5px' }}>N°Ticket</th>
-                                                    <th style={{ padding: '10px 5px' }}>Precio</th>
-                                                    <th style={{ padding: '10px 5px' }}>Premio</th>
-                                                    <th style={{ padding: '10px 5px', textAlign: 'center' }}></th>
+                                                <tr className="history-head-row">
+                                                    <th className="history-head-cell">Fecha</th>
+                                                    <th className="history-head-cell">N°Ticket</th>
+                                                    <th className="history-head-cell">Precio</th>
+                                                    <th className="history-head-cell">Premio</th>
+                                                    <th className="history-head-cell history-head-cell-center"></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {currentHistory.length === 0 && (
                                                     <tr>
-                                                        <td colSpan={5} style={{ padding: '24px 5px', color: 'var(--text-muted)', textAlign: 'center' }}>
+                                                        <td colSpan={5} className="history-empty-row">
                                                             Aún no hay jugadas registradas.
                                                         </td>
                                                     </tr>
                                                 )}
                                                 {currentHistory.map((item, index) => (
-                                                    <tr key={`${item.id}-${item.timestamp}-${index}`} style={{ borderBottom: '1px solid #222' }}>
-                                                        <td style={{ padding: '12px 5px' }}>{formatHistoryDate(item.timestamp)}</td>
-                                                        <td style={{ padding: '12px 5px' }}>{item.id}</td>
-                                                        <td style={{ padding: '12px 5px' }}>${formatPoints(item.bet)}</td>
-                                                        <td style={{ padding: '12px 5px', color: item.win > 0 ? '#e3b341' : 'var(--text-muted)', fontWeight: item.win > 0 ? 'bold' : 'normal' }}>
+                                                    <tr key={`${item.id}-${item.timestamp}-${index}`} className="history-row">
+                                                        <td className="history-cell">{formatHistoryDate(item.timestamp)}</td>
+                                                        <td className="history-cell">{item.id}</td>
+                                                        <td className="history-cell">${formatPoints(item.bet)}</td>
+                                                        <td className={`history-cell ${item.win > 0 ? 'history-cell-win' : 'history-cell-muted'}`}>
                                                             {item.win > 0 ? `$${formatPoints(item.win)}` : 'Sin premio'}
                                                         </td>
-                                                        <td style={{ padding: '8px 5px', textAlign: 'center' }}>
+                                                        <td className="history-cell history-cell-action">
                                                             <button className="btn-replay" onClick={() => {
-                                                                closeAll(); 
+                                                                closeAll();
                                                                 setTimeout(() => {
-                                                                    if(window.gameRef) window.gameRef.setupReplay({ bet: item.bet, win: item.win }, 'history');
+                                                                    if (window.gameRef) window.gameRef.setupReplay({ bet: item.bet, win: item.win }, 'history');
                                                                 }, 50);
                                                             }}>
                                                                 <i className="ph ph-play-circle"></i> Ver
@@ -276,22 +289,22 @@ export default function SlotUI() {
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '15px', gap: '15px' }}>
-                                        <button className="shop-btn-adjust" style={{ width: '35px', height: '35px', opacity: safeCurrentPage === 1 ? 0.3 : 1 }} disabled={safeCurrentPage === 1} onClick={prevPage}><i className="ph ph-caret-left"></i></button>
-                                        <span style={{ color: 'var(--text-muted)', fontSize: '14px', fontWeight: 'bold' }}>Pág {safeCurrentPage} de {totalPages}</span>
-                                        <button className="shop-btn-adjust" style={{ width: '35px', height: '35px', opacity: safeCurrentPage === totalPages ? 0.3 : 1 }} disabled={safeCurrentPage === totalPages} onClick={nextPage}><i className="ph ph-caret-right"></i></button>
+                                    <div className="pager-row">
+                                        <button className="shop-btn-adjust shop-btn-small" disabled={safeCurrentPage === 1} onClick={prevPage}><i className="ph ph-caret-left"></i></button>
+                                        <span className="pager-label">Pág {safeCurrentPage} de {totalPages}</span>
+                                        <button className="shop-btn-adjust shop-btn-small" disabled={safeCurrentPage === totalPages} onClick={nextPage}><i className="ph ph-caret-right"></i></button>
                                     </div>
                                 </div>
                             )}
 
                             {activeTab === 'rules' && (
                                 <div className="tab-pane active">
-                                    <h4 style={{ marginTop: 0, color: 'var(--text-main)', marginBottom: '15px', fontSize: '20px' }}>Reglas del Juego</h4>
-                                    <p style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '25px', lineHeight: '1.5' }}>
+                                    <h4 className="rules-title">Reglas del Juego</h4>
+                                    <p className="rules-copy">
                                         Los premios se calculan encontrando <strong>Grupos (Clusters)</strong> de figuras iguales. 
                                         Para ganar, necesitas un mínimo de <strong>4 figuras conectadas</strong> horizontal o verticalmente. El premio final multiplica tu Apuesta.
                                     </p>
-                                    <div className="info-row"><span className="info-label">Jackpot Máximo</span><span className="info-val" style={{ color: '#e3b341' }}>Hasta x500</span></div>
+                                    <div className="info-row"><span className="info-label">Jackpot Máximo</span><span className="info-val info-val-jackpot">Hasta x500</span></div>
                                     <div className="info-row"><span className="info-label">Grupo de 9+ Figuras</span><span className="info-val">Apuesta x10 a x500</span></div>
                                     <div className="info-row"><span className="info-label">Grupo de 4 Figuras</span><span className="info-val">Apuesta x0.2 a x5.0</span></div>
                                 </div>
@@ -299,31 +312,31 @@ export default function SlotUI() {
 
                             {activeTab === 'settings' && (
                                 <div className="tab-pane active">
-                                    <div style={{ paddingBottom: '20px', borderBottom: '1px solid var(--border-color)', marginBottom: '20px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px' }}>
-                                            <i className="ph ph-gauge" style={{ fontSize: '24px', color: 'var(--text-main)', marginRight: '10px' }}></i>
-                                            <span style={{ color: 'white', fontWeight: 'bold', fontSize: '18px' }}>Velocidad de Juego</span>
+                                    <div className="settings-section">
+                                        <div className="settings-head">
+                                            <i className="ph ph-gauge settings-head-icon"></i>
+                                            <span className="settings-head-title">Velocidad de Juego</span>
                                         </div>
-                                        <div style={{ display: 'flex', gap: '10px' }}>
-                                            <button style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: speedLevel === 1 ? 'var(--accent-blue)' : 'var(--panel-color)', color: speedLevel === 1 ? 'white' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s' }} onClick={() => setSpeedLevel(1)}>Normal</button>
-                                            <button style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: speedLevel === 2 ? 'var(--accent-blue)' : 'var(--panel-color)', color: speedLevel === 2 ? 'white' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s' }} onClick={() => setSpeedLevel(2)}>Rápido</button>
-                                            <button style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: speedLevel === 3 ? 'var(--accent-green)' : 'var(--panel-color)', color: speedLevel === 3 ? 'white' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s' }} onClick={() => setSpeedLevel(3)}>Turbo <i className="ph ph-lightning" style={{marginLeft: '4px'}}></i></button>
+                                        <div className="settings-speed-row">
+                                            <button className={`settings-speed-btn ${speedLevel === 1 ? 'is-active' : ''}`} onClick={() => setSpeedLevel(1)}>Normal</button>
+                                            <button className={`settings-speed-btn ${speedLevel === 2 ? 'is-active' : ''}`} onClick={() => setSpeedLevel(2)}>Rápido</button>
+                                            <button className={`settings-speed-btn settings-speed-btn-turbo ${speedLevel === 3 ? 'is-active' : ''}`} onClick={() => setSpeedLevel(3)}>Turbo <i className="ph ph-lightning settings-speed-icon"></i></button>
                                         </div>
                                     </div>
                                     <div>
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '15px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                <i className="ph ph-speaker-high" style={{ fontSize: '24px', color: 'var(--text-main)', marginRight: '10px' }}></i>
-                                                <span style={{ color: 'white', fontWeight: 'bold', fontSize: '18px' }}>Configuración de Audio</span>
+                                        <div className="settings-audio-head">
+                                            <div className="settings-head">
+                                                <i className="ph ph-speaker-high settings-head-icon"></i>
+                                                <span className="settings-head-title">Configuración de Audio</span>
                                             </div>
-                                            <button onClick={toggleSound} style={{ background: isMuted ? '#ff4a4a20' : 'transparent', border: `1px solid ${isMuted ? '#ff4a4a' : 'var(--border-color)'}`, color: isMuted ? '#ff4a4a' : 'white', padding: '6px 12px', borderRadius: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', transition: 'all 0.2s' }}>
+                                            <button onClick={toggleSound} className={`audio-toggle-btn ${isMuted ? 'is-muted' : ''}`}>
                                                 <i className={isMuted ? "ph ph-speaker-slash" : "ph ph-speaker-high"}></i> {isMuted ? 'Muteado' : 'Silenciar Todo'}
                                             </button>
                                         </div>
-                                        <div style={{ background: 'var(--panel-color)', padding: '15px', borderRadius: '10px', border: '1px solid #222' }}>
-                                            <VolumeSlider label="Volumen Maestro" value={masterVolume} setter={setMasterVolume} icon="ph-faders" isMuted={isMuted} />
-                                            <VolumeSlider label="Música de Fondo" value={musicVolume} setter={setMusicVolume} icon="ph-music-notes" isMuted={isMuted} />
-                                            <VolumeSlider label="Efectos de Sonido" value={sfxVolume} setter={setSfxVolume} icon="ph-coin" isMuted={isMuted} />
+                                        <div className="settings-audio-panel">
+                                            <VolumeSlider label="Volumen Maestro" value={masterVolume} setter={setMasterVolume} icon="ph-faders" isMuted={isMuted} tone="master" />
+                                            <VolumeSlider label="Música de Fondo" value={musicVolume} setter={setMusicVolume} icon="ph-music-notes" isMuted={isMuted} tone="music" />
+                                            <VolumeSlider label="Efectos de Sonido" value={sfxVolume} setter={setSfxVolume} icon="ph-coin" isMuted={isMuted} tone="sfx" />
                                         </div>
                                     </div>
                                 </div>
@@ -333,49 +346,45 @@ export default function SlotUI() {
                 )}
                 
                 {alertConfig && (
-                    <div className="modal-alert" onClick={(e) => e.stopPropagation()} style={{ background: 'var(--panel-color)', padding: '25px', borderRadius: '15px', border: '1px solid var(--border-color)', textAlign: 'center', maxWidth: '350px' }}>
-                        <h3 style={{ color: 'white', margin: '0 0 10px 0', fontSize: '20px' }}>{alertConfig.title}</h3>
-                        <p style={{ color: '#8b949e', fontSize: '15px', whiteSpace: 'pre-wrap', marginBottom: '20px' }}>{alertConfig.msg}</p>
+                    <div className="modal-alert modal-alert-basic" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="modal-alert-title">{alertConfig.title}</h3>
+                        <p className="modal-alert-text">{alertConfig.msg}</p>
                         <button className="btn-confirm" onClick={closeAll}>Aceptar</button>
                     </div>
                 )}
 
                 {buyModalConfig && (
-                    <div className="modal-alert" onClick={(e) => e.stopPropagation()} style={{ background: '#0a0e17', padding: '30px', borderRadius: '15px', border: '1px solid var(--border-color)', textAlign: 'center', maxWidth: '500px' }}>
-                        <h2 style={{ color: 'white', margin: '0 0 10px 0', fontSize: '24px' }}>Visualizar Jugadas</h2>
-                        <p style={{ color: '#aaaaaa', marginBottom: '25px', fontSize: '15px' }}>
-                            Compraste <strong>{buyModalConfig.qty} jugadas</strong> por ${formatPoints(buyModalConfig.cost)}.<br/>Elige cómo quieres visualizarlas:
+                    <div className="modal-alert modal-alert-buy" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="modal-buy-title">Visualizar Jugadas</h2>
+                        <p className="modal-buy-copy">
+                            Compraste <strong>{buyModalConfig.qty} jugadas</strong> por ${formatPoints(buyModalConfig.cost)}.<br />Elige cómo quieres visualizarlas:
                         </p>
                         <div className="buy-options-layout">
-                            <div 
+                            <div
+                                className="buy-option-card"
                                 onClick={() => {
                                     closeAll();
-                                    if(window.gameRef) window.gameRef.startAutoReveal(buyModalConfig.qty, buyModalConfig.cost);
+                                    if (window.gameRef) window.gameRef.startAutoReveal(buyModalConfig.qty, buyModalConfig.cost);
                                 }}
-                                style={{ flex: 1, border: '2px solid var(--accent-blue)', borderRadius: '12px', padding: '20px', cursor: 'pointer', background: 'rgba(37, 99, 235, 0.1)', transition: 'all 0.2s', textAlign: 'left' }}
-                                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(37, 99, 235, 0.3)'}
-                                onMouseOut={(e) => e.currentTarget.style.background = 'rgba(37, 99, 235, 0.1)'}
                             >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                                    <i className="ph ph-ticket" style={{ fontSize: '32px', color: 'white' }}></i>
-                                    <h3 style={{ color: 'white', margin: 0, fontSize: '18px' }}>Automática</h3>
+                                <div className="buy-option-head">
+                                    <i className="ph ph-ticket buy-option-icon"></i>
+                                    <h3 className="buy-option-title">Automática</h3>
                                 </div>
-                                <p style={{ color: '#aaaaaa', fontSize: '13px', margin: 0, lineHeight: 1.4 }}>Resultados inmediatos con opción a repetición.</p>
+                                <p className="buy-option-copy">Resultados inmediatos con opción a repetición.</p>
                             </div>
-                            <div 
+                            <div
+                                className="buy-option-card"
                                 onClick={() => {
                                     closeAll();
-                                    if(window.gameRef) window.gameRef.startManualMode(buyModalConfig.qty, buyModalConfig.betVal, buyModalConfig.cost);
+                                    if (window.gameRef) window.gameRef.startManualMode(buyModalConfig.qty, buyModalConfig.betVal, buyModalConfig.cost);
                                 }}
-                                style={{ flex: 1, border: '2px solid var(--accent-blue)', borderRadius: '12px', padding: '20px', cursor: 'pointer', background: 'rgba(37, 99, 235, 0.1)', transition: 'all 0.2s', textAlign: 'left' }}
-                                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(37, 99, 235, 0.3)'}
-                                onMouseOut={(e) => e.currentTarget.style.background = 'rgba(37, 99, 235, 0.1)'}
                             >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                                    <i className="ph ph-youtube-logo" style={{ fontSize: '32px', color: 'white' }}></i>
-                                    <h3 style={{ color: 'white', margin: 0, fontSize: '18px' }}>Manual</h3>
+                                <div className="buy-option-head">
+                                    <i className="ph ph-youtube-logo buy-option-icon"></i>
+                                    <h3 className="buy-option-title">Manual</h3>
                                 </div>
-                                <p style={{ color: '#aaaaaa', fontSize: '13px', margin: 0, lineHeight: 1.4 }}>Jugadas una por una en la pantalla de juego.</p>
+                                <p className="buy-option-copy">Jugadas una por una en la pantalla de juego.</p>
                             </div>
                         </div>
                     </div>
@@ -383,25 +392,25 @@ export default function SlotUI() {
 
                 {/* --- MODIFICACIÓN: MODAL JUGADA PENDIENTE --- */}
                 {pendingSpinAlert && (
-                    <div className="modal-alert" onClick={(e) => e.stopPropagation()} style={{ background: 'var(--panel-color)', padding: '25px', borderRadius: '15px', border: '1px solid #FFD700', textAlign: 'center', maxWidth: '350px' }}>
-                        <h3 style={{ color: 'white', margin: '0 0 10px 0', fontSize: '20px' }}>Jugada Pendiente</h3>
-                        <p style={{ color: '#8b949e', fontSize: '15px', whiteSpace: 'pre-wrap', marginBottom: '20px' }}>
+                    <div className="modal-alert modal-alert-pending" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="modal-alert-title">Jugada Pendiente</h3>
+                        <p className="modal-alert-text">
                             Tienes una jugada pendiente de visualización. Por favor aceptar para continuar.
                         </p>
                         <button className="btn-confirm" onClick={() => {
                             const savedData = pendingSpinAlert;
-                            closeAll(); 
+                            closeAll();
                             setTimeout(() => {
-                                if(window.gameRef) window.gameRef.playPendingSpin(savedData);
+                                if (window.gameRef) window.gameRef.playPendingSpin(savedData);
                             }, 100);
                         }}>Aceptar</button>
                     </div>
                 )}
 
                 {replayWarningConfig && (
-                    <div className="modal-alert" onClick={(e) => e.stopPropagation()} style={{ background: 'var(--panel-color)', padding: '25px', borderRadius: '15px', border: '1px solid var(--accent-blue)', textAlign: 'center', maxWidth: '350px' }}>
-                        <h3 style={{ color: 'white', margin: '0 0 10px 0', fontSize: '20px' }}>Repetición de Jugada</h3>
-                        <p style={{ color: '#8b949e', fontSize: '15px', whiteSpace: 'pre-wrap', marginBottom: '20px' }}>
+                    <div className="modal-alert modal-alert-replay" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="modal-alert-title">Repetición de Jugada</h3>
+                        <p className="modal-alert-text">
                             Esta es una repetición de una jugada ya realizada.
                         </p>
                         <button className="btn-confirm" onClick={closeAll}>Continuar</button>
@@ -409,27 +418,27 @@ export default function SlotUI() {
                 )}
 
                 {summaryModalConfig && (
-                    <div className="modal-alert" onClick={(e) => e.stopPropagation()} style={{ background: '#0a0e17', padding: '30px', borderRadius: '15px', border: '1px solid #333', width: '100%', maxWidth: '500px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
-                            <i className="ph ph-clipboard-text" style={{ fontSize: '28px', color: 'white', marginRight: '10px' }}></i>
-                            <h2 style={{ color: 'white', margin: 0, fontSize: '22px' }}>Resumen</h2>
+                    <div className="modal-alert modal-alert-summary" onClick={(e) => e.stopPropagation()}>
+                        <div className="summary-head">
+                            <i className="ph ph-clipboard-text summary-head-icon"></i>
+                            <h2 className="summary-head-title">Resumen</h2>
                         </div>
-                        
-                        <div style={{ overflowX: 'auto', marginBottom: '20px' }}>
-                            <table style={{ width: '100%', color: 'white', textAlign: 'left', borderCollapse: 'collapse', fontSize: '14px' }}>
+
+                        <div className="summary-table-wrap">
+                            <table className="summary-table">
                                 <thead>
-                                    <tr style={{ borderBottom: '1px solid #333', color: 'var(--text-muted)' }}>
-                                        <th style={{ padding: '10px 5px' }}>N°Jugada</th>
-                                        <th style={{ padding: '10px 5px' }}>Precio</th>
-                                        <th style={{ padding: '10px 5px' }}>Resultado</th>
+                                    <tr className="summary-table-head-row">
+                                        <th className="summary-table-head-cell">N°Jugada</th>
+                                        <th className="summary-table-head-cell">Precio</th>
+                                        <th className="summary-table-head-cell">Resultado</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {summaryModalConfig.slice((summaryPage - 1) * 5, summaryPage * 5).map((item, index) => (
-                                        <tr key={index} style={{ borderBottom: '1px solid #222' }}>
-                                            <td style={{ padding: '12px 5px' }}>{item.spinNum}</td>
-                                            <td style={{ padding: '12px 5px' }}>${formatPoints(item.bet)}</td>
-                                            <td style={{ padding: '12px 5px', color: item.win > 0 ? '#FFD700' : 'var(--text-muted)', fontWeight: item.win > 0 ? 'bold' : 'normal' }}>
+                                        <tr key={index} className="summary-table-row">
+                                            <td className="summary-table-cell">{item.spinNum}</td>
+                                            <td className="summary-table-cell">${formatPoints(item.bet)}</td>
+                                            <td className={`summary-table-cell ${item.win > 0 ? 'summary-table-cell-win' : 'summary-table-cell-muted'}`}>
                                                 {item.win > 0 ? `$${formatPoints(item.win)}` : 'Sin premio'}
                                             </td>
                                         </tr>
@@ -439,53 +448,44 @@ export default function SlotUI() {
                         </div>
 
                         {summaryModalConfig.length > 5 && (
-                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '25px', gap: '15px' }}>
-                                <button className="shop-btn-adjust" style={{ width: '35px', height: '35px', opacity: summaryPage === 1 ? 0.3 : 1 }} disabled={summaryPage === 1} onClick={() => setSummaryPage(p => Math.max(p - 1, 1))}><i className="ph ph-caret-left"></i></button>
-                                <span style={{ color: 'var(--text-muted)', fontSize: '14px', fontWeight: 'bold' }}>Pág {summaryPage} de {Math.ceil(summaryModalConfig.length / 5)}</span>
-                                <button className="shop-btn-adjust" style={{ width: '35px', height: '35px', opacity: summaryPage === Math.ceil(summaryModalConfig.length / 5) ? 0.3 : 1 }} disabled={summaryPage === Math.ceil(summaryModalConfig.length / 5)} onClick={() => setSummaryPage(p => Math.min(p + 1, Math.ceil(summaryModalConfig.length / 5)))}><i className="ph ph-caret-right"></i></button>
+                            <div className="pager-row pager-row-summary">
+                                <button className="shop-btn-adjust shop-btn-small" disabled={summaryPage === 1} onClick={() => setSummaryPage(p => Math.max(p - 1, 1))}><i className="ph ph-caret-left"></i></button>
+                                <span className="pager-label">Pág {summaryPage} de {Math.ceil(summaryModalConfig.length / 5)}</span>
+                                <button className="shop-btn-adjust shop-btn-small" disabled={summaryPage === Math.ceil(summaryModalConfig.length / 5)} onClick={() => setSummaryPage(p => Math.min(p + 1, Math.ceil(summaryModalConfig.length / 5)))}><i className="ph ph-caret-right"></i></button>
                             </div>
                         )}
 
-                        <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
-                            <button 
-                                style={{ width: '60px', height: '60px', borderRadius: '50%', border: '1px solid #444', background: 'transparent', color: 'white', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }} 
+                        <div className="summary-actions">
+                            <button
+                                className="summary-action-btn"
                                 onClick={() => {
                                     closeAll();
-                                    if(window.gameRef) window.gameRef.showLobby();
+                                    if (window.gameRef) window.gameRef.showLobby();
                                     setTimeout(() => openMenu('history'), 50);
                                 }}
                                 title="Ver Historial"
-                            ><i className="ph ph-clock-counter-clockwise" style={{ fontSize: '28px' }}></i></button>
-                            <button 
-                                style={{ width: '60px', height: '60px', borderRadius: '50%', border: '1px solid #444', background: 'transparent', color: 'white', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }} 
+                            ><i className="ph ph-clock-counter-clockwise summary-action-icon"></i></button>
+                            <button
+                                className="summary-action-btn"
                                 onClick={() => {
-                                    closeAll(); 
-                                    if(window.gameRef) window.gameRef.showLobby();
+                                    closeAll();
+                                    if (window.gameRef) window.gameRef.showLobby();
                                 }}
                                 title="Volver al Inicio"
-                            ><i className="ph ph-house" style={{ fontSize: '28px' }}></i></button>
+                            ><i className="ph ph-house summary-action-icon"></i></button>
                         </div>
                     </div>
                 )}
             </div>
 
-            <div className="pos-top-right" style={{ opacity: (isSpinning || hideRightHud) ? 0 : 1, pointerEvents: (isSpinning || hideRightHud) ? 'none' : 'auto', transition: 'opacity 0.3s', display: hideRightHud ? 'none' : 'flex' }}>
+            <div className={`pos-top-right hud-right ${rightHudVisibilityClass}`}>
                 <button className="hud-btn" onClick={toggleFullscreen} title="Pantalla Completa">
                     <i className={isFullscreen ? "ph ph-corners-in" : "ph ph-corners-out"}></i>
                 </button>
             </div>
 
             <div
-                className="pos-bottom-right"
-                style={{
-                    opacity: (isSpinning || hideRightHud) ? 0 : 1,
-                    pointerEvents: (isSpinning || hideRightHud) ? 'none' : 'auto',
-                    transition: 'opacity 0.3s',
-                    display: hideRightHud ? 'none' : 'flex',
-                    ...(typeof hudDockTop === 'number'
-                        ? { top: `${hudDockTop}px`, bottom: 'auto', right: '8px', transform: 'none' }
-                        : {})
-                }}
+                className={`pos-bottom-right hud-right ${rightHudVisibilityClass} ${typeof hudDockTop === 'number' ? 'hud-docked' : ''}`}
             >
                 <button className={`hud-btn ${activeTab === 'history' ? 'active-hud' : ''}`} onClick={() => openMenu('history')} title="Historial">
                     <i className="ph ph-clock-counter-clockwise"></i>
