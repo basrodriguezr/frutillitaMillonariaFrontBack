@@ -342,7 +342,7 @@ export function startAutoReveal(qty, totalCost) {
                         card.bg.fillRoundedRect(-card.cardW/2, -card.cardH/2, card.cardW, card.cardH, 10);
                         card.bg.strokeRoundedRect(-card.cardW/2, -card.cardH/2, card.cardW, card.cardH, 10);
                         
-                        card.txt.setText(isWin ? `PREMIO\n$${this.formatPoints(prize)}` : `SIN\nPREMIO`);
+                        card.txt.setText(isWin ? `$${this.formatPoints(prize)}` : `SIN\nPREMIO`);
                         card.txt.setFontSize(`${isWin ? cm.winFont : cm.loseFont}px`);
                         card.txt.setColor(isWin ? '#FFD700' : '#888888');
                         card.txt.setY(cm.resultTextY);
