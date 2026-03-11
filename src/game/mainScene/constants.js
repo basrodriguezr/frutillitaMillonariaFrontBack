@@ -225,6 +225,7 @@ const VIEWPORT_RANGE_OVERRIDES = [
     {
         id: 'mobile-under-905-buttons',
         match: {
+            orientation: 'portrait',
             maxWidth: 905
         },
         overrides: {

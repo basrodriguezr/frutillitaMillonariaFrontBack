@@ -24,6 +24,7 @@ export function applyLobbyLayout({
 }) {
     if (scene.layerLobby && scene.layerLobby.visible) {
         scene.layerLobby.setPosition(w/2, h/2);
+        const isShortLandscapeLobby = !isPortrait && h <= 460;
         const lobbyOverrides = viewportOverrides.lobby || {};
         const lobbyBase = isPortrait
             ? {
@@ -43,13 +44,16 @@ export function applyLobbyLayout({
             }
             : {
                 jackpotTop: 10,
-                jackpotWidth: Math.min(contentWidth * 0.72, 1080),
+                jackpotWidth: Math.min(
+                    contentWidth * (isShortLandscapeLobby ? 0.56 : 0.72),
+                    isShortLandscapeLobby ? 700 : 1080
+                ),
                 jackpotMaxHeightRatio: 0.46,
-                titleGapFromJackpot: 24,
+                titleGapFromJackpot: isShortLandscapeLobby ? 10 : 24,
                 titleFallbackRatio: 0.20,
-                landscapeStackButtonsStartGap: 120,
-                landscapeStackButtonsGap: 140,
-                landscapeRowButtonsYGap: 50,
+                landscapeStackButtonsTopGap: isShortLandscapeLobby ? 16 : 26,
+                landscapeStackButtonsGap: isShortLandscapeLobby ? 106 : 140,
+                landscapeRowButtonsTopGap: isShortLandscapeLobby ? 14 : 24,
                 landscapeButtonBaseWidth: 480,
                 landscapeButtonsGap: 24,
                 landscapeButtonsMaxPairWidthRatio: 0.95,
@@ -59,7 +63,7 @@ export function applyLobbyLayout({
                 landscapeStackScaleMax: 1.0,
                 landscapeRowScaleMin: 0.45,
                 landscapeRowScaleMax: 1.08,
-                landscapeRowVerticalAnchorDivisor: 3,
+                landscapeRowVerticalAnchorDivisor: isShortLandscapeLobby ? 2 : 3,
                 buttonHalfHeight: 60,
                 bottomSafeMargin: 24
             };
@@ -72,10 +76,21 @@ export function applyLobbyLayout({
             lobbyCfg.jackpotMaxHeightRatio
         );
 
+        if (isPortrait) {
+            scene.lobbyTitle.setScale(1);
+        } else {
+            const titleScaleLandscape = isShortLandscapeLobby
+                ? Phaser.Math.Clamp(h / 760, 0.46, 0.72)
+                : Phaser.Math.Clamp(h / 620, 0.58, 0.96);
+            scene.lobbyTitle.setScale(titleScaleLandscape);
+        }
+        const titleBoundsForSpacing = scene.lobbyTitle.getBounds();
+        const titleHalfHeight = Math.max(1, titleBoundsForSpacing.height / 2);
         let titleWorldY = lobbyJackpot
-            ? (lobbyJackpot.bottom + lobbyCfg.titleGapFromJackpot)
+            ? (lobbyJackpot.bottom + lobbyCfg.titleGapFromJackpot + titleHalfHeight)
             : (h * lobbyCfg.titleFallbackRatio);
         scene.lobbyTitle.setPosition(0, titleWorldY - (h / 2));
+        const titleBottomWorld = scene.lobbyTitle.getBounds().bottom;
 
         if (isPortrait) {
             const isMobilePortraitLobby = w <= 520;
@@ -133,7 +148,7 @@ export function applyLobbyLayout({
                     lobbyCfg.landscapeStackScaleMin,
                     lobbyCfg.landscapeStackScaleMax
                 );
-                let btnComprarY = titleWorldY + lobbyCfg.landscapeStackButtonsStartGap;
+                let btnComprarY = titleBottomWorld + (lobbyCfg.landscapeStackButtonsTopGap ?? 20) + (lobbyCfg.buttonHalfHeight * scaleBtn);
                 // Gap en px reales para que el ajuste por rango sea predecible.
                 let btnJugarY = btnComprarY + lobbyCfg.landscapeStackButtonsGap;
                 const buttonBottom = btnJugarY + (lobbyCfg.buttonHalfHeight * scaleBtn);
@@ -158,7 +173,7 @@ export function applyLobbyLayout({
                 );
                 const buttonWidth = buttonBaseWidth * scaleBtn;
                 const separation = (buttonWidth / 2) + (buttonGap / 2);
-                let buttonY = titleWorldY + lobbyCfg.landscapeRowButtonsYGap;
+                let buttonY = titleBottomWorld + (lobbyCfg.landscapeRowButtonsTopGap ?? 18) + (lobbyCfg.buttonHalfHeight * scaleBtn);
                 const buttonBottom = buttonY + (lobbyCfg.buttonHalfHeight * scaleBtn);
                 if (buttonBottom > (h - lobbyCfg.bottomSafeMargin)) {
                     const shiftUp = buttonBottom - (h - lobbyCfg.bottomSafeMargin);
@@ -166,8 +181,8 @@ export function applyLobbyLayout({
                     titleWorldY -= shiftUp;
                     scene.lobbyTitle.setPosition(0, titleWorldY - (h / 2));
                 }
-                scene.btnLobbyComprar.setPosition(-separation, buttonY - (h / lobbyCfg.landscapeRowVerticalAnchorDivisor));
-                scene.btnLobbyJugar.setPosition(separation, buttonY - (h / lobbyCfg.landscapeRowVerticalAnchorDivisor));
+                scene.btnLobbyComprar.setPosition(-separation, buttonY - (h / 2));
+                scene.btnLobbyJugar.setPosition(separation, buttonY - (h / 2));
                 scene.btnLobbyComprar.baseScale = scaleBtn;
                 scene.btnLobbyJugar.baseScale = scaleBtn;
                 scene.btnLobbyComprar.setScale(scaleBtn);

@@ -33,16 +33,28 @@ export default function PhaserGame() {
      * No requiere parámetros.
      */
     const getViewportSize = () => {
+      const layoutW = Math.max(
+        1,
+        Math.round(window.innerWidth || document.documentElement.clientWidth || 1)
+      );
+      const layoutH = Math.max(
+        1,
+        Math.round(window.innerHeight || document.documentElement.clientHeight || 1)
+      );
       const vv = window.visualViewport;
       if (vv && Number.isFinite(vv.width) && Number.isFinite(vv.height)) {
+        // Safari iOS reduce visualViewport cuando las barras del navegador están visibles.
+        // Tomamos un viewport estable para que el tablero no se "encoja" en el teléfono real.
+        const visualW = Math.max(1, Math.round(vv.width));
+        const visualH = Math.max(1, Math.round(vv.height + (vv.offsetTop || 0)));
         return {
-          w: Math.max(1, Math.round(vv.width)),
-          h: Math.max(1, Math.round(vv.height))
+          w: Math.max(layoutW, visualW),
+          h: Math.max(layoutH, visualH)
         };
       }
       return {
-        w: Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1),
-        h: Math.max(1, window.innerHeight || document.documentElement.clientHeight || 1)
+        w: layoutW,
+        h: layoutH
       };
     };
 
