@@ -22,7 +22,7 @@ const VIEWPORT_SCALE_MODEL = {
             shop: 0.88,
             shopCards: 0.88,
             shopResult: 0.9,
-            gameBoard: 0.92,
+            gameBoard: 1.0,
             gameInfo: 0.9,
             gameControls: 0.88,
             shopTitle: 0.9

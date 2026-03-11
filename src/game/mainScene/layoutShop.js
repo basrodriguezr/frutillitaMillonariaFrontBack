@@ -177,7 +177,7 @@ export function applyShopLayout({
             shopLandscapeResultGapToCards: 8,
             mobileJackpotWidthBoost: 1.12,
             mobileJackpotHeightBoost: 1.06,
-            portraitMobileCardScaleCap: 1.34
+            portraitMobileCardScaleCap: 1.46
         };
         const shopCfg = { ...shopBase, ...shopOverrides };
         const shopCenterX = isPortrait ? (w / 2) : ((contentLeft + contentRight) / 2);

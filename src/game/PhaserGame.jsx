@@ -95,18 +95,17 @@ export default function PhaserGame() {
             google: { families: ['Luckiest Guy'] },
             active: function() {
                 if (!gameRef.current) {
-                    const isMobileLike = isMobileLikeDevice();
                     const config = {
-                        type: window.Phaser.WEBGL,
+                        type: window.Phaser.AUTO,
                         resolution: getRenderResolution(),
-                        autoRound: isMobileLike,
+                        autoRound: false,
                         antialias: true,
                         pixelArt: false,
-                        roundPixels: isMobileLike,
+                        roundPixels: false,
                         render: {
                           antialias: true,
                           pixelArt: false,
-                          roundPixels: isMobileLike,
+                          roundPixels: false,
                           powerPreference: 'high-performance'
                         },
                         scale: {
