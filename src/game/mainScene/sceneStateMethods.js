@@ -58,6 +58,12 @@ export function showGame() {
     this.uiElements.controlsGroup.setVisible(true);
     this.uiElements.replayControlsGroup.setVisible(false);
     this.uiElements.manualControlsGroup.setVisible(false);
+    this.uiElements.spinBtn.setScale(1).setX(0).setVisible(true);
+    if (this.uiElements.replayBackBtn) {
+        this.uiElements.replayBackBtn.setVisible(false).setScale(1).setX(0);
+    }
+    this.uiElements.btnMinus.setVisible(true);
+    this.uiElements.btnPlus.setVisible(true);
     if (this.uiElements.spinBtnLabel) {
         this.uiElements.spinBtnLabel
             .setText('▶')

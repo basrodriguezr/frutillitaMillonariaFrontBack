@@ -187,6 +187,7 @@ function playSpinAnimation(scene, data, timings) {
     const resultGrid = data.grid;
     const totalWin = data.totalWin;
     const winGroups = data.winGroups;
+    if (window.playFillSfx) window.playFillSfx();
 
     for (let c = 0; c < 5; c++) {
         for (let r = 0; r < 5; r++) {
@@ -397,6 +398,7 @@ export function startManualMode(qty, betVal, totalCost) {
         this.manualBet = betVal;
         this.manualResults = [];
         this.manualAccumulatedWin = 0;
+        this.currentManualSpinWin = 0;
 
         persistManualPackState(this, {
             current: 1,
@@ -433,11 +435,11 @@ export function executeManualSpin() {
 
         this.isSpinning = true;
         this.uiElements.btnManualNext.setVisible(false); 
-        
-        const runningManualTotal = Math.max(0, Number(this.manualAccumulatedWin) || 0);
-        this.uiElements.contWin.val.setText("$" + this.formatPoints(runningManualTotal));
+
+        this.currentManualSpinWin = 0;
+        this.uiElements.contWin.val.setText("$0");
         this.uiElements.contWin.val.setFontSize('40px');
-        this.uiElements.contWin.val.setColor(runningManualTotal > 0 ? '#FFFF00' : '#FFF');
+        this.uiElements.contWin.val.setColor('#FFF');
         
         this.resetBoardState();
         for(let c=0; c<5; c++) { 
@@ -473,10 +475,18 @@ export function finishManualSpin(winAmount) {
         } else if (window.playPackLoseSfx) {
             window.playPackLoseSfx();
         }
-        this.manualAccumulatedWin = (Number(this.manualAccumulatedWin) || 0) + Math.max(0, Number(winAmount) || 0);
-        this.uiElements.contWin.val.setText("$" + this.formatPoints(this.manualAccumulatedWin));
-        this.uiElements.contWin.val.setFontSize('40px');
-        this.uiElements.contWin.val.setColor(this.manualAccumulatedWin > 0 ? '#FFFF00' : '#FFF');
+        const currentSpinWin = Math.max(0, Number(winAmount) || 0);
+        this.manualAccumulatedWin = (Number(this.manualAccumulatedWin) || 0) + currentSpinWin;
+        this.currentManualSpinWin = currentSpinWin;
+        if (currentSpinWin > 0) {
+            this.uiElements.contWin.val.setText("$" + this.formatPoints(currentSpinWin));
+            this.uiElements.contWin.val.setFontSize('40px');
+            this.uiElements.contWin.val.setColor('#FFFF00');
+        } else {
+            this.uiElements.contWin.val.setText("$0");
+            this.uiElements.contWin.val.setFontSize('40px');
+            this.uiElements.contWin.val.setColor('#FFFFFF');
+        }
 
         this.manualResults.push({
             spinNum: this.manualCurrent,
@@ -530,18 +540,26 @@ export function playPendingSpin(savedData) {
             this.manualBet = pendingPack.bet;
             this.manualResults = [...pendingPack.results];
             this.manualAccumulatedWin = this.manualResults.reduce((acc, result) => acc + (Number(result?.win) || 0), 0);
+            this.currentManualSpinWin = Number(this.manualResults[this.manualResults.length - 1]?.win) || 0;
 
             setupManualModeView(this);
             this.uiElements.lblManualStatus.setText(`JUGADA ${this.manualCurrent} DE ${this.manualTotal}`);
             this.uiElements.manualBetBox.val.setText("$" + this.formatPoints(this.manualBet));
-            this.uiElements.contWin.val.setText("$" + this.formatPoints(this.manualAccumulatedWin));
-            this.uiElements.contWin.val.setFontSize('40px');
-            this.uiElements.contWin.val.setColor(this.manualAccumulatedWin > 0 ? '#FFFF00' : '#FFF');
+            if (this.currentManualSpinWin > 0) {
+                this.uiElements.contWin.val.setText("$" + this.formatPoints(this.currentManualSpinWin));
+                this.uiElements.contWin.val.setFontSize('40px');
+                this.uiElements.contWin.val.setColor('#FFFF00');
+            } else {
+                this.uiElements.contWin.val.setText("$0");
+                this.uiElements.contWin.val.setFontSize('40px');
+                this.uiElements.contWin.val.setColor('#FFFFFF');
+            }
             this.resetBoardState();
             this.applyResponsiveLayout({ width: this.scale.width, height: this.scale.height });
             if (window.setCurrentScreen) window.setCurrentScreen('game');
 
             if (pendingPack.hasActiveSpin && pendingPack.spinData) {
+                this.currentManualSpinWin = 0;
                 if(window.setReactSpinning) window.setReactSpinning(true);
                 this.isSpinning = true;
                 this.uiElements.btnManualNext.setVisible(false);
@@ -612,11 +630,16 @@ export function setupReplay(configData, source) {
         this.uiElements.replayControlsGroup.setVisible(false);
         this.uiElements.btnMinus.setVisible(false);
         this.uiElements.spinBtn.setVisible(true);
+        this.uiElements.spinBtn.setScale(0.82).setX(-66);
+        if (this.uiElements.replayBackBtn) {
+            this.uiElements.replayBackBtn.setVisible(true);
+            this.uiElements.replayBackBtn.setScale(0.82).setX(66);
+        }
         this.uiElements.btnPlus.setVisible(false);
         if (this.uiElements.spinBtnLabel) {
             this.uiElements.spinBtnLabel
                 .setText('↺')
-                .setFontSize('64px')
+                .setFontSize('58px')
                 .setX(0)
                 .setY(0)
                 .setLineSpacing(0);
@@ -663,6 +686,7 @@ export async function executeReplay() {
 
         this.isSpinning = true;
         this.uiElements.spinBtn.setVisible(false); 
+        if (this.uiElements.replayBackBtn) this.uiElements.replayBackBtn.setVisible(false);
         this.uiElements.btnMinus.setVisible(false);
         this.uiElements.btnPlus.setVisible(false);
         

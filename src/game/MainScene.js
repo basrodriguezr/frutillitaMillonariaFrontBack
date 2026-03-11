@@ -73,6 +73,7 @@ export class MainScene extends Phaser.Scene {
         this.manualBet = 0;
         this.manualResults = [];
         this.manualAccumulatedWin = 0;
+        this.currentManualSpinWin = 0;
 
         this.isReplayMode = false;
         this.replaySource = ''; 
@@ -372,7 +373,7 @@ export class MainScene extends Phaser.Scene {
         if (qty >= 20) {
             return isMobilePortrait
                 ? { cardW: 52, cardH: 58, pad: 8 }
-                : { cardW: 48, cardH: 54, pad: 8 };
+                : { cardW: 62, cardH: 72, pad: 10 };
         }
         if (qty >= 15) {
             return { cardW: 50, cardH: 64, pad: isMobilePortrait ? 10 : 5 };
@@ -497,9 +498,10 @@ export class MainScene extends Phaser.Scene {
      * Dibuja o redibuja las tarjetas de tickets según cantidad seleccionada.
      * Parámetros:
      * - `qty` (number): Cantidad de tickets/cartas a procesar.
+     * - `options` (object, opcional): Configuración de redraw.
      */
-    drawShopCards(qty) {
-        return drawShopCards.call(this, qty);
+    drawShopCards(qty, options = {}) {
+        return drawShopCards.call(this, qty, options);
     }
 
     /**

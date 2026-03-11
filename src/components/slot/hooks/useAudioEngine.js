@@ -10,6 +10,8 @@ export function useAudioEngine({ isMuted, musicVolume, sfxVolume }) {
   const audioContextRef = useRef(null);
   const musicTimerRef = useRef(null);
   const musicStepRef = useRef(0);
+  const isActivatedRef = useRef(false);
+  const canPlayMusicRef = useRef(window.__audioPhase === 'main');
   const mutedRef = useRef(isMuted);
   const musicVolumeRef = useRef(musicVolume);
   const sfxVolumeRef = useRef(sfxVolume);
@@ -55,6 +57,7 @@ export function useAudioEngine({ isMuted, musicVolume, sfxVolume }) {
      * - `when` (number, opcional): Delay de inicio relativo en segundos.
      */
     const playTone = ({ frequency, duration, gain, type = 'sine', when = 0 }) => {
+      if (!isActivatedRef.current) return;
       if (mutedRef.current) return;
       const ctx = ensureContext();
       if (!ctx) return;
@@ -87,6 +90,7 @@ export function useAudioEngine({ isMuted, musicVolume, sfxVolume }) {
      * - `when` (number, opcional): Delay de inicio relativo en segundos.
      */
     const playSweep = ({ from, to, duration, gain, type = 'sine', when = 0 }) => {
+      if (!isActivatedRef.current) return;
       if (mutedRef.current) return;
       const ctx = ensureContext();
       if (!ctx) return;
@@ -198,6 +202,36 @@ export function useAudioEngine({ isMuted, musicVolume, sfxVolume }) {
     };
 
     /**
+     * Reproduce efecto de llenado cuando las frutas entran al tablero.
+     * No requiere parámetros.
+     */
+    const playFillSfx = () => {
+      const sfx = clamp01((sfxVolumeRef.current || 0) / 100);
+      if (sfx <= 0) return;
+      // Efecto más contundente: ataque brillante + cuerpo grave + caída marcada.
+      playSweep({ from: 1200, to: 180, duration: 0.34, gain: 0.13 * sfx, type: 'sawtooth' });
+      playSweep({ from: 520, to: 90, duration: 0.26, gain: 0.11 * sfx, type: 'triangle', when: 0.02 });
+      playTone({ frequency: 92, duration: 0.24, gain: 0.10 * sfx, type: 'sine', when: 0.015 });
+      playTone({ frequency: 1480, duration: 0.06, gain: 0.06 * sfx, type: 'square', when: 0.0 });
+    };
+
+    /**
+     * Reproduce un efecto de llenado para la pantalla de carga inicial.
+     * Parámetros:
+     * - `progress` (number, opcional): Progreso normalizado entre `0` y `1`.
+     */
+    const playLoadingFillSfx = (progress = 0) => {
+      const sfx = clamp01((sfxVolumeRef.current || 0) / 100);
+      if (sfx <= 0) return;
+      const p = clamp01(progress);
+      const base = 180 + (260 * p);
+      // "Burbujeo" ascendente corto para acompañar la barra de carga.
+      playSweep({ from: base * 0.9, to: base * 1.9, duration: 0.11, gain: 0.09 * sfx, type: 'triangle' });
+      playTone({ frequency: base * 0.75, duration: 0.12, gain: 0.06 * sfx, type: 'sine', when: 0.01 });
+      playTone({ frequency: base * 2.1, duration: 0.05, gain: 0.04 * sfx, type: 'square', when: 0.045 });
+    };
+
+    /**
      * Detiene el loop de música de fondo si está activo.
      * No requiere parámetros.
      */
@@ -240,12 +274,39 @@ export function useAudioEngine({ isMuted, musicVolume, sfxVolume }) {
     };
 
     /**
+     * Sincroniza el loop de música según activación, fase de juego y estado de mute.
+     * No requiere parámetros.
+     */
+    const syncMusicLoop = () => {
+      // Mantener el loop vivo en fase principal permite recuperar sonido al desmutear
+      // sin requerir reinicializaciones adicionales del timer.
+      const shouldPlayMusic = isActivatedRef.current && canPlayMusicRef.current;
+      if (shouldPlayMusic) {
+        startMusicLoop();
+      } else {
+        stopMusicLoop();
+      }
+    };
+
+    /**
      * Activa contexto de audio e intenta iniciar música de fondo.
      * No requiere parámetros.
      */
     const bootstrapAudio = () => {
+      isActivatedRef.current = true;
       ensureContext();
-      startMusicLoop();
+      syncMusicLoop();
+    };
+
+    /**
+     * Actualiza la fase de audio global (`loading` o `main`) y reevalúa música.
+     * Parámetros:
+     * - `event` (CustomEvent): Evento con `detail.phase` para habilitar o pausar BGM.
+     */
+    const onAudioPhaseChanged = (event) => {
+      const phase = event?.detail?.phase;
+      canPlayMusicRef.current = phase === 'main';
+      syncMusicLoop();
     };
 
     /**
@@ -268,21 +329,17 @@ export function useAudioEngine({ isMuted, musicVolume, sfxVolume }) {
     window.playMatchSfx = playMatchSfx;
     window.playLoseSfx = playLoseSfx;
     window.playCoinsSfx = playCoinsSfx;
+    window.playFillSfx = playFillSfx;
+    window.playLoadingFillSfx = playLoadingFillSfx;
+    window.bootstrapAudioEngine = bootstrapAudio;
 
-    window.addEventListener('pointerdown', bootstrapAudio, { passive: true });
-    window.addEventListener('keydown', bootstrapAudio);
     document.addEventListener('click', onDocumentClick, true);
-
-    // Si el usuario quita mute, asegurar loop activo.
-    if (!mutedRef.current) {
-      bootstrapAudio();
-    }
+    window.addEventListener('audio-phase-changed', onAudioPhaseChanged);
 
     return () => {
       stopMusicLoop();
-      window.removeEventListener('pointerdown', bootstrapAudio);
-      window.removeEventListener('keydown', bootstrapAudio);
       document.removeEventListener('click', onDocumentClick, true);
+      window.removeEventListener('audio-phase-changed', onAudioPhaseChanged);
       if (window.playButtonSfx === playButtonSfx) delete window.playButtonSfx;
       if (window.playWinSfx === playWinSfx) delete window.playWinSfx;
       if (window.playPackLoseSfx === playPackLoseSfx) delete window.playPackLoseSfx;
@@ -290,6 +347,9 @@ export function useAudioEngine({ isMuted, musicVolume, sfxVolume }) {
       if (window.playMatchSfx === playMatchSfx) delete window.playMatchSfx;
       if (window.playLoseSfx === playLoseSfx) delete window.playLoseSfx;
       if (window.playCoinsSfx === playCoinsSfx) delete window.playCoinsSfx;
+      if (window.playFillSfx === playFillSfx) delete window.playFillSfx;
+      if (window.playLoadingFillSfx === playLoadingFillSfx) delete window.playLoadingFillSfx;
+      if (window.bootstrapAudioEngine === bootstrapAudio) delete window.bootstrapAudioEngine;
     };
   }, []);
 }

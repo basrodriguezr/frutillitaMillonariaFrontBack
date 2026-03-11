@@ -44,8 +44,8 @@ export default function HistoryTab({
                   {item.win > 0 ? `$${formatPoints(item.win)}` : 'Sin premio'}
                 </td>
                 <td className="history-cell history-cell-action">
-                  <button className="btn-replay" onClick={() => onReplay(item)}>
-                    <i className="ph ph-play-circle"></i> Ver
+                  <button className="btn-replay" onClick={() => onReplay(item)} title="Ver jugada">
+                    <i className="ph ph-eye"></i>
                   </button>
                 </td>
               </tr>

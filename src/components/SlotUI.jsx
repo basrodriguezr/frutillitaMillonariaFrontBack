@@ -65,7 +65,7 @@ export default function SlotUI() {
   const [summaryPage, setSummaryPage] = useState(1);
   const [isSpinning, setIsSpinning] = useState(false);
 
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(() => window.__audioConsentEnabled === false);
   const [currentPage, setCurrentPage] = useState(1);
   const [speedLevel, setSpeedLevel] = useState(1);
 
@@ -112,7 +112,13 @@ export default function SlotUI() {
   );
 
   const toggleSound = useCallback(() => {
-    setIsMuted((prev) => !prev);
+    setIsMuted((prev) => {
+      const nextMuted = !prev;
+      if (prev && !nextMuted && window.bootstrapAudioEngine) {
+        window.bootstrapAudioEngine();
+      }
+      return nextMuted;
+    });
   }, []);
 
   const handleSpeedChange = useCallback((level) => {
@@ -233,6 +239,23 @@ export default function SlotUI() {
     root.style.setProperty('--vol-music', `${musicVolume}%`);
     root.style.setProperty('--vol-sfx', `${sfxVolume}%`);
   }, [hudDockTop, musicVolume, sfxVolume]);
+
+  useEffect(() => {
+    /**
+     * Sincroniza el estado visual de mute con la elección del modal inicial de audio.
+     * Parámetros:
+     * - `event` (CustomEvent): Evento con `detail.enabled` indicando si se habilitó sonido.
+     */
+    const onAudioConsentChanged = (event) => {
+      const enabled = Boolean(event?.detail?.enabled);
+      setIsMuted(!enabled);
+    };
+
+    window.addEventListener('audio-consent-changed', onAudioConsentChanged);
+    return () => {
+      window.removeEventListener('audio-consent-changed', onAudioConsentChanged);
+    };
+  }, []);
 
   return (
     <div id="ui-layer">

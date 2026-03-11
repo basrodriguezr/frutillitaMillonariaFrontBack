@@ -89,7 +89,7 @@ export function buildLobby() {
             align: 'center', stroke: '#000000', strokeThickness: 8, shadow: { offsetX: 4, offsetY: 4, color: '#000', blur: 6, fill: true }
         }).setOrigin(0.5);
 
-        this.btnLobbyComprar = this.createMenuButton("COMPRAR PAQUETE\nDE TICKETS", 0x1e3a8a, 480, 120, () => {
+        this.btnLobbyComprar = this.createMenuButton("JUGAR TICKETS", 0x1e3a8a, 480, 120, () => {
             if (hasAnyPendingPlay()) {
                 if (window.showReactAlert) {
                     window.showReactAlert(
@@ -221,13 +221,34 @@ export function buildUI() {
         });
         this.uiElements.spinBtn.add([circle, txtSpin, hit]);
 
+        this.uiElements.replayBackBtn = this.add.container(0, 0);
+        const replayBackCircle = this.add.graphics();
+        replayBackCircle.fillStyle(0x3A3A3A); replayBackCircle.lineStyle(4, 0xFFFFFF);
+        replayBackCircle.fillCircle(0,0,70); replayBackCircle.strokeCircle(0,0,70);
+        const replayBackLabel = this.add.text(0, 0, "←", {fontSize:'64px', color:'#FFF'}).setOrigin(0.5);
+        this.uiElements.replayBackBtnLabel = replayBackLabel;
+        const replayBackHit = this.add.zone(0, 0, 150, 150).setInteractive({cursor:'pointer'}).setOrigin(0.5);
+        replayBackHit.on('pointerdown', () => {
+            if(window.reactUI && window.reactUI.isActive) return;
+            if (window.playButtonSfx) window.playButtonSfx();
+            this.exitReplay();
+        });
+        this.uiElements.replayBackBtn.add([replayBackCircle, replayBackLabel, replayBackHit]);
+        this.uiElements.replayBackBtn.setVisible(false);
+
         this.uiElements.btnMinus = this.createBtn("-", -120, 0, () => this.changeBet(-1));
         this.uiElements.btnPlus = this.createBtn("+", 120, 0, () => this.changeBet(1));
 
         this.uiElements.betBox = this.createStatBox("APUESTA", "$"+this.formatPoints(BET_VALUES[this.currentBetIndex]), fontTitle, fontVal);
         this.uiElements.betBox.container.setPosition(0, 145); 
 
-        this.uiElements.controlsGroup.add([this.uiElements.btnMinus, this.uiElements.spinBtn, this.uiElements.btnPlus, this.uiElements.betBox.container]);
+        this.uiElements.controlsGroup.add([
+            this.uiElements.btnMinus,
+            this.uiElements.spinBtn,
+            this.uiElements.replayBackBtn,
+            this.uiElements.btnPlus,
+            this.uiElements.betBox.container
+        ]);
         this.layerUI.add(this.uiElements.controlsGroup);
 
 

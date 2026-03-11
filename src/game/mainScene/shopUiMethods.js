@@ -17,7 +17,7 @@ export function buildShop() {
         this.qtyButtons = [];
         const options = [5, 10, 15, 20];
         options.forEach((opt, idx) => {
-            const btn = this.add.container(-165 + (idx * 100), 20); 
+            const btn = this.add.container(-150 + (idx * 100), 20); 
             const bg = this.add.graphics();
             const hit = this.add.zone(0,0,90,70).setInteractive({cursor:'pointer'}).setOrigin(0.5);
             const txt = this.add.text(0,-10, opt.toString(), { fontFamily: 'Luckiest Guy, Arial', fontSize: '34px', color: '#FFF' }).setOrigin(0.5);
@@ -92,24 +92,156 @@ export function buildShop() {
     }
 
 /**
+ * Aplica estado visual base de una tarjeta de tienda según bloqueo/disponibilidad.
+ * Parámetros:
+ * - `card` (object): Contenedor de tarjeta con referencias visuales internas.
+ * - `cm` (object): Métricas de contenido usadas para tamaños y offsets.
+ * - `isLocked` (boolean): Indica si la tarjeta está bloqueada por cantidad no comprada.
+ */
+function applyShopCardBaseState(card, cm, isLocked) {
+        card.bg.clear();
+        if (isLocked) {
+            card.bg.fillStyle(0x1b1b1b, 0.95);
+            card.bg.lineStyle(2, 0x3d3d3d, 0.9);
+            card.bg.fillRoundedRect(-card.cardW / 2, -card.cardH / 2, card.cardW, card.cardH, 10);
+            card.bg.strokeRoundedRect(-card.cardW / 2, -card.cardH / 2, card.cardW, card.cardH, 10);
+            card.txt.setText('🔒');
+            card.txt.setY(cm.hiddenTextY);
+            card.txt.setFontSize(`${Math.max(14, Math.round(cm.hiddenFont * 0.8))}px`);
+            card.txt.setColor('#585858');
+        } else {
+            card.bg.fillStyle(0x333333, 1);
+            card.bg.lineStyle(2, 0xffffff, 0.3);
+            card.bg.fillRoundedRect(-card.cardW / 2, -card.cardH / 2, card.cardW, card.cardH, 10);
+            card.bg.strokeRoundedRect(-card.cardW / 2, -card.cardH / 2, card.cardW, card.cardH, 10);
+            card.txt.setText('?');
+            card.txt.setY(cm.hiddenTextY);
+            card.txt.setFontSize(`${cm.hiddenFont}px`);
+            card.txt.setColor('#aaaaaa');
+        }
+        card.txt.setLineSpacing(cm.lineSpacing);
+        card.btnVerBg.setVisible(false);
+        card.btnVerTxt.setVisible(false);
+        card.btnVerTxt.setY(cm.verBtnCenterY);
+        card.btnVerTxt.setFontSize(`${cm.verBtnFont}px`);
+        card.hit.disableInteractive();
+        card.replayData = null;
+        card.replayBet = null;
+        card.ticketId = null;
+        if (card.ticketTag) card.ticketTag.setVisible(false);
+}
+
+/**
+ * Captura el estado persistible de una tarjeta para restaurarlo tras un redraw.
+ * Parámetros:
+ * - `card` (object): Contenedor de tarjeta con referencias visuales internas.
+ */
+function extractShopCardState(card) {
+        if (!card) return null;
+        return {
+            replayData: card.replayData || null,
+            replayBet: Number(card.replayBet) || 0,
+            ticketId: card.ticketId || null,
+            isRevealed: Boolean(card.btnVerBg?.visible || card.btnVerTxt?.visible),
+            ticketTagText: card.ticketTag?.text || ''
+        };
+}
+
+/**
+ * Restaura visualmente una tarjeta ya revelada usando su estado previo.
+ * Parámetros:
+ * - `scene` (object): Instancia de la escena principal.
+ * - `card` (object): Contenedor de tarjeta con referencias visuales internas.
+ * - `state` (object): Snapshot de estado persistido para esa tarjeta.
+ */
+function applyShopCardRevealedState(scene, card, state) {
+        if (!scene || !card || !state?.replayData) return;
+        const cm = card.contentMetrics || scene.getShopCardContentMetrics(card.cardW, card.cardH);
+        const prize = Number(state.replayData.totalWin) || 0;
+        const isWin = prize > 0;
+
+        card.replayData = state.replayData;
+        card.replayBet = state.replayBet;
+        card.ticketId = state.ticketId;
+        if (card.ticketTag && state.ticketTagText) {
+            card.ticketTag.setText(state.ticketTagText);
+        }
+
+        card.bg.clear();
+        card.bg.fillStyle(isWin ? 0x1e3a8a : 0x222222, 1);
+        card.bg.lineStyle(2, isWin ? 0xFFD700 : 0x555555, 1);
+        card.bg.fillRoundedRect(-card.cardW / 2, -card.cardH / 2, card.cardW, card.cardH, 10);
+        card.bg.strokeRoundedRect(-card.cardW / 2, -card.cardH / 2, card.cardW, card.cardH, 10);
+
+        card.txt.setText(isWin ? `$${scene.formatPoints(prize)}` : 'SIN\nPREMIO');
+        card.txt.setFontSize(`${isWin ? cm.winFont : cm.loseFont}px`);
+        card.txt.setColor(isWin ? '#FFD700' : '#888888');
+        card.txt.setY(cm.resultTextY);
+        card.txt.setLineSpacing(cm.lineSpacing);
+        if (isWin) {
+            const maxTextWidth = Math.max(38, card.cardW - 12);
+            let fitFont = cm.winFont;
+            while (fitFont > cm.minWinFont && card.txt.width > maxTextWidth) {
+                fitFont -= 1;
+                card.txt.setFontSize(`${fitFont}px`);
+            }
+        }
+
+        card.btnVerBg.clear();
+        card.btnVerBg.fillStyle(0x00C853, 1);
+        card.btnVerBg.lineStyle(1, 0xffffff, 0.8);
+        card.btnVerBg.fillRoundedRect(-(cm.verBtnWidth / 2), cm.verBtnTopY, cm.verBtnWidth, cm.verBtnHeight, cm.verBtnRadius);
+        card.btnVerBg.strokeRoundedRect(-(cm.verBtnWidth / 2), cm.verBtnTopY, cm.verBtnWidth, cm.verBtnHeight, cm.verBtnRadius);
+        card.btnVerTxt.setY(cm.verBtnCenterY);
+        card.btnVerTxt.setFontSize(`${cm.verBtnFont}px`);
+        card.btnVerBg.setVisible(true);
+        card.btnVerTxt.setVisible(true);
+
+        card.hit.setInteractive({ cursor: 'pointer' });
+        card.hit.removeAllListeners('pointerup');
+        card.hit.on('pointerup', () => {
+            if (scene.isSpinning) return;
+            if (window.playButtonSfx) window.playButtonSfx();
+            scene.setupReplay({ replayData: card.replayData, replayBet: card.replayBet }, 'shop');
+        });
+}
+
+/**
  * Dibuja o redibuja las tarjetas de tickets según cantidad seleccionada.
  * Parámetros:
  * - `qty` (number): Cantidad de tickets/cartas a procesar.
+ * - `options` (object, opcional): Configuración de redraw.
+ * - `options.preserveState` (boolean, opcional): Si es `true`, intenta restaurar el estado visual previo.
  */
-export function drawShopCards(qty) {
+export function drawShopCards(qty, options = {}) {
+        const { preserveState = false } = options;
+        const previousStates = preserveState && Array.isArray(this.shopCards)
+            ? this.shopCards.map(extractShopCardState)
+            : [];
         this.shopCardsContainer.removeAll(true);
         this.shopCards = [];
 
         const maxCols = 10;
         const isPortrait = this.scale.height > this.scale.width;
-        const isMobilePortrait = isPortrait && this.scale.width <= 520;
-        const actualCols = Math.min(maxCols, this.getShopGridCols(qty, isPortrait));
+        const viewportProfile = typeof this.getViewportScaleProfile === 'function'
+            ? this.getViewportScaleProfile(this.scale.width, this.scale.height)
+            : null;
+        const portraitMobileLayout = isPortrait && (
+            viewportProfile
+                ? (viewportProfile.profileKey === 'mobile-portrait' || viewportProfile.profileKey === 'tablet-portrait')
+                : this.scale.width <= 1024
+        );
+        const isMobilePortrait = portraitMobileLayout && this.scale.width <= 520;
+        const displayQty = portraitMobileLayout ? 20 : qty;
+        const unlockedQty = portraitMobileLayout ? Math.min(qty, displayQty) : displayQty;
+        const actualCols = Math.min(maxCols, this.getShopGridCols(displayQty, isPortrait));
         this.currentShopCols = actualCols;
-        const rows = Math.ceil(qty / actualCols);
-        const visualCols = !isPortrait && qty === 5 ? 10 : actualCols;
-        const { cardW, cardH, pad } = this.getShopCardMetrics(qty, isPortrait);
+        this.currentShopDisplayQty = displayQty;
+        const rows = Math.ceil(displayQty / actualCols);
+        const visualCols = !isPortrait && displayQty === 5 ? 10 : actualCols;
+        const { cardW, cardH, pad } = this.getShopCardMetrics(displayQty, isPortrait);
         const baseContentMetrics = this.getShopCardContentMetrics(cardW, cardH);
-        const isQty20 = qty >= 20;
+        const isQty20 = displayQty >= 20;
         const contentMetrics = isQty20
             ? {
                 ...baseContentMetrics,
@@ -125,7 +257,7 @@ export function drawShopCards(qty) {
         const startX = -totalW / 2 + cardW / 2;
         const startY = -totalH / 2 + cardH / 2;
 
-        for (let i = 0; i < qty; i++) {
+        for (let i = 0; i < displayQty; i++) {
             let r = Math.floor(i / actualCols);
             let c = i % actualCols;
             let posX = startX + c * (cardW + pad);
@@ -167,6 +299,18 @@ export function drawShopCards(qty) {
             card.contentMetrics = contentMetrics;
             card.gridRow = r;
             card.ticketTag = ticketTag;
+            card.isLockedSlot = i >= unlockedQty;
+            applyShopCardBaseState(card, contentMetrics, card.isLockedSlot);
+            const previousState = previousStates[i];
+            if (previousState?.replayData && !card.isLockedSlot) {
+                if (previousState.isRevealed) {
+                    applyShopCardRevealedState(this, card, previousState);
+                } else {
+                    card.replayData = previousState.replayData;
+                    card.replayBet = previousState.replayBet;
+                    card.ticketId = previousState.ticketId;
+                }
+            }
             
             this.shopCardsContainer.add(card);
             this.shopCards.push(card);
@@ -212,19 +356,6 @@ export function resetShopCards() {
         this.shopCards.forEach(card => {
             const cm = card.contentMetrics || this.getShopCardContentMetrics(card.cardW, card.cardH);
             card.setScale(1);
-            card.bg.clear();
-            card.bg.fillStyle(0x333333, 1); card.bg.lineStyle(2, 0xffffff, 0.3);
-            card.bg.fillRoundedRect(-card.cardW/2, -card.cardH/2, card.cardW, card.cardH, 10);
-            card.bg.strokeRoundedRect(-card.cardW/2, -card.cardH/2, card.cardW, card.cardH, 10);
-            card.txt.setText("?");
-            card.txt.setY(cm.hiddenTextY);
-            card.txt.setColor('#aaaaaa');
-            card.txt.setFontSize(`${cm.hiddenFont}px`);
-            card.txt.setLineSpacing(cm.lineSpacing);
-            card.btnVerTxt.setY(cm.verBtnCenterY);
-            card.btnVerTxt.setFontSize(`${cm.verBtnFont}px`);
-            card.btnVerBg.setVisible(false); card.btnVerTxt.setVisible(false); card.hit.disableInteractive(); 
-            card.replayData = null;
-            if (card.ticketTag) card.ticketTag.setVisible(false);
+            applyShopCardBaseState(card, cm, Boolean(card.isLockedSlot));
         });
     }

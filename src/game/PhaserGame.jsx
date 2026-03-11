@@ -7,6 +7,16 @@ export default function PhaserGame() {
 
   useEffect(() => {
     /**
+     * Obtiene una resolucion de render segura para dispositivos high-DPI.
+     * No requiere parametros.
+     */
+    const getRenderResolution = () => {
+      const dpr = Number(window.devicePixelRatio) || 1;
+      // Limitar a 2 evita sobrecarga fuerte en moviles antiguos.
+      return Math.min(2, Math.max(1, dpr));
+    };
+
+    /**
      * Obtiene el tamaño real del viewport priorizando `visualViewport`.
      * No requiere parámetros.
      */
@@ -64,6 +74,17 @@ export default function PhaserGame() {
                 if (!gameRef.current) {
                     const config = {
                         type: window.Phaser.AUTO,
+                        resolution: getRenderResolution(),
+                        autoRound: false,
+                        antialias: true,
+                        pixelArt: false,
+                        roundPixels: false,
+                        render: {
+                          antialias: true,
+                          pixelArt: false,
+                          roundPixels: false,
+                          powerPreference: 'high-performance'
+                        },
                         scale: { mode: window.Phaser.Scale.RESIZE, parent: 'phaser-container', width: '100%', height: '100%' },
                         backgroundColor: '#000000',
                         scene: [BootScene, LoadingScene, MainScene]

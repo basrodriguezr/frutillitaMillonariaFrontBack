@@ -78,13 +78,29 @@ export function applyLobbyLayout({
         scene.lobbyTitle.setPosition(0, titleWorldY - (h / 2));
 
         if (isPortrait) {
+            const isMobilePortraitLobby = w <= 520;
+            const portraitScaleBaseRatio = isMobilePortraitLobby
+                ? (lobbyCfg.portraitButtonScaleMobileWidthRatio ?? 0.80)
+                : lobbyCfg.portraitButtonScaleBaseWidthRatio;
+            const portraitScaleMin = isMobilePortraitLobby
+                ? (lobbyCfg.portraitButtonScaleMobileMin ?? 0.54)
+                : lobbyCfg.portraitButtonScaleMin;
+            const portraitScaleMax = isMobilePortraitLobby
+                ? (lobbyCfg.portraitButtonScaleMobileMax ?? 0.88)
+                : lobbyCfg.portraitButtonScaleMax;
+            const portraitButtonsStartGap = isMobilePortraitLobby
+                ? (lobbyCfg.portraitButtonsStartGapMobile ?? 164)
+                : lobbyCfg.portraitButtonsStartGap;
+            const portraitButtonsGap = isMobilePortraitLobby
+                ? (lobbyCfg.portraitButtonsGapMobile ?? 118)
+                : lobbyCfg.portraitButtonsGap;
             let scaleBtn = Phaser.Math.Clamp(
-                ((contentWidth * lobbyCfg.portraitButtonScaleBaseWidthRatio) / lobbyCfg.portraitButtonScaleBaseWidth) * lobbyScaleFactor,
-                lobbyCfg.portraitButtonScaleMin,
-                lobbyCfg.portraitButtonScaleMax
+                ((contentWidth * portraitScaleBaseRatio) / lobbyCfg.portraitButtonScaleBaseWidth) * lobbyScaleFactor,
+                portraitScaleMin,
+                portraitScaleMax
             );
-            let btnComprarY = titleWorldY + lobbyCfg.portraitButtonsStartGap;
-            let btnJugarY = btnComprarY + lobbyCfg.portraitButtonsGap;
+            let btnComprarY = titleWorldY + portraitButtonsStartGap;
+            let btnJugarY = btnComprarY + portraitButtonsGap;
             const buttonBottom = btnJugarY + (lobbyCfg.buttonHalfHeight * scaleBtn);
             const overflow = Math.max(0, buttonBottom - (h - lobbyCfg.bottomSafeMargin));
             if (overflow > 0) {
@@ -94,8 +110,13 @@ export function applyLobbyLayout({
                 scene.lobbyTitle.setPosition(0, titleWorldY - (h / 2));
             }
             scene.lobbyTitle.setPosition(0, titleWorldY - (h / 2));
-            scene.btnLobbyComprar.setPosition(0, btnComprarY - (h / 2));
-            scene.btnLobbyJugar.setPosition(0, btnJugarY - (h / 2));
+            if (isMobilePortraitLobby) {
+                scene.btnLobbyJugar.setPosition(0, btnComprarY - (h / 2));
+                scene.btnLobbyComprar.setPosition(0, btnJugarY - (h / 2));
+            } else {
+                scene.btnLobbyComprar.setPosition(0, btnComprarY - (h / 2));
+                scene.btnLobbyJugar.setPosition(0, btnJugarY - (h / 2));
+            }
             scene.btnLobbyComprar.baseScale = scaleBtn;
             scene.btnLobbyJugar.baseScale = scaleBtn;
             scene.btnLobbyComprar.setScale(scaleBtn);

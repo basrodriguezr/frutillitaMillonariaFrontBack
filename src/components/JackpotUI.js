@@ -316,17 +316,27 @@ export class JackpotUI {
         if (!this.amountTxt || !this.image) return;
 
         const baseFontSize = 40;
-        const desiredFinalFontSize = Phaser.Math.Clamp(targetWidth * 0.058, 24, 56);
+        const legacyFinalFontSize = Phaser.Math.Clamp(targetWidth * 0.058, 24, 56);
+        const desiredFinalFontSize = Phaser.Math.Clamp(targetWidth * 0.064, 24, 60);
         const strokeThickness = Math.round(Phaser.Math.Clamp(desiredFinalFontSize * 0.12, 4, 8));
-        const localTextScale = Phaser.Math.Clamp(desiredFinalFontSize / Math.max(baseFontSize * scale, 0.01), 0.65, 1.35);
+        const legacyScale = Phaser.Math.Clamp(legacyFinalFontSize / Math.max(baseFontSize * scale, 0.01), 0.65, 1.35);
+        let localTextScale = Phaser.Math.Clamp(desiredFinalFontSize / Math.max(baseFontSize * scale, 0.01), 0.65, 1.45);
         const textX = Math.round(this.image.width * this.valueXRatio);
         const textY = Math.round(this.image.height * this.valueYRatio);
+        const maxFinalTextWidth = targetWidth * 0.62;
 
         this.amountTxt
             .setPosition(textX, textY)
             .setFontSize(baseFontSize)
             .setStroke('#1b3258', strokeThickness)
             .setScale(localTextScale);
+
+        // Ajuste de seguridad: si el texto se acerca al borde del panel, reducir escala.
+        if (this.amountTxt.displayWidth > maxFinalTextWidth) {
+            const fitScale = localTextScale * (maxFinalTextWidth / this.amountTxt.displayWidth);
+            localTextScale = Phaser.Math.Clamp(fitScale, legacyScale, localTextScale);
+            this.amountTxt.setScale(localTextScale);
+        }
     }
 
     /**

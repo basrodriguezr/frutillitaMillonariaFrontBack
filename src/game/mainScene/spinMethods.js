@@ -114,6 +114,7 @@ export async function spin() {
 
         this.isSpinning = true;
         this.uiElements.spinBtn.setVisible(false); 
+        if (this.uiElements.replayBackBtn) this.uiElements.replayBackBtn.setVisible(false);
         this.uiElements.btnMinus.setVisible(false);
         this.uiElements.btnPlus.setVisible(false);
         this.resetBoardState();
@@ -137,6 +138,7 @@ export async function spin() {
             await new Promise(resolve => setTimeout(resolve, 200)); 
 
             const resultGrid = data.grid, totalWin = data.totalWin, winGroups = data.winGroups;
+            if (window.playFillSfx) window.playFillSfx();
 
             for(let c=0; c<5; c++) { 
                 for(let r=0; r<5; r++) { 
@@ -157,6 +159,7 @@ export async function spin() {
             console.error("Error al obtener giro:", error);
             this.isSpinning = false; 
             this.uiElements.spinBtn.setVisible(true);
+            if (this.uiElements.replayBackBtn) this.uiElements.replayBackBtn.setVisible(false);
             this.uiElements.btnMinus.setVisible(true);
             this.uiElements.btnPlus.setVisible(true);
             if(window.setReactSpinning) window.setReactSpinning(false);
@@ -172,10 +175,21 @@ export function resetBoardState() {
         this.tweens.killTweensOf([this.lblWinFloat, this.lblLoseFloat, this.lblTotalWinFloat]);
         this.lblWinFloat.setVisible(false); this.lblLoseFloat.setVisible(false); this.lblTotalWinFloat.setVisible(false); 
         if (this.isManualMode) {
-            const manualTotal = Math.max(0, Number(this.manualAccumulatedWin) || 0);
-            this.uiElements.contWin.val.setText("$" + this.formatPoints(manualTotal));
-            this.uiElements.contWin.val.setFontSize('40px');
-            this.uiElements.contWin.val.setColor(manualTotal > 0 ? '#FFFF00' : '#FFF');
+            const currentManualWin = Math.max(0, Number(this.currentManualSpinWin) || 0);
+            const hasManualResults = Array.isArray(this.manualResults) && this.manualResults.length > 0;
+            if (this.isSpinning || !hasManualResults) {
+                this.uiElements.contWin.val.setText("$0");
+                this.uiElements.contWin.val.setFontSize('40px');
+                this.uiElements.contWin.val.setColor('#FFF');
+            } else if (currentManualWin > 0) {
+                this.uiElements.contWin.val.setText("$" + this.formatPoints(currentManualWin));
+                this.uiElements.contWin.val.setFontSize('40px');
+                this.uiElements.contWin.val.setColor('#FFFF00');
+            } else {
+                this.uiElements.contWin.val.setText("$0");
+                this.uiElements.contWin.val.setFontSize('40px');
+                this.uiElements.contWin.val.setColor('#FFFFFF');
+            }
         } else {
             this.uiElements.contWin.val.setText("$0");
             this.uiElements.contWin.val.setFontSize('40px');
@@ -222,10 +236,12 @@ export function endSpin(totalWin, winGroups) {
                 this.finishManualSpin(0);
             } else if(this.isReplayMode) {
                 this.uiElements.spinBtn.setVisible(true); 
+                if (this.uiElements.replayBackBtn) this.uiElements.replayBackBtn.setVisible(true);
                 this.uiElements.btnMinus.setVisible(false);
                 this.uiElements.btnPlus.setVisible(false);
             } else {
                 this.uiElements.spinBtn.setVisible(true); 
+                if (this.uiElements.replayBackBtn) this.uiElements.replayBackBtn.setVisible(false);
                 this.uiElements.btnMinus.setVisible(true);
                 this.uiElements.btnPlus.setVisible(true);
             }
@@ -234,11 +250,12 @@ export function endSpin(totalWin, winGroups) {
             this.lblWinFloat.setVisible(false); this.lblTotalWinFloat.setVisible(false);
 
             if (this.isManualMode) {
-                const manualTotal = Math.max(0, Number(this.manualAccumulatedWin) || 0);
-                this.uiElements.contWin.val.setFontSize('40px');
-                this.uiElements.contWin.val.setText("$" + this.formatPoints(manualTotal));
-                this.uiElements.contWin.val.setColor(manualTotal > 0 ? '#FFFF00' : '#FFFFFF');
                 this.lblLoseFloat.setVisible(false);
+                this.lblTotalWinFloat.setText("¡SIN PREMIO!");
+                this.lblTotalWinFloat.setColor('#FFFFFF');
+                this.lblTotalWinFloat.setVisible(true);
+                this.lblTotalWinFloat.setScale(0);
+                this.tweens.add({ targets: this.lblTotalWinFloat, scaleX: 1, scaleY: 1, duration: 700, ease: 'Back.out' });
                 for(let c=0; c<5; c++) {
                     for(let r=0; r<5; r++) { this.tweens.add({ targets: this.symbolsMatrix[c][r], alpha: 0.5, duration: 300, ease: 'Sine.easeOut' }); }
                 }
@@ -299,6 +316,7 @@ export function playSequentialWins(winGroups) {
 
                 for(let c=0; c<5; c++) { for(let r=0; r<5; r++) { this.symbolsMatrix[c][r].setAlpha(0.3); } }
                 this.lblTotalWinFloat.setText("¡GANASTE!\n$" + this.formatPoints(this.accumulatedWin));
+                this.lblTotalWinFloat.setColor('#FFD700');
                 this.lblTotalWinFloat.setVisible(true); this.lblTotalWinFloat.setScale(0);
                 this.tweens.add({ targets: this.lblTotalWinFloat, scaleX: 1, scaleY: 1, duration: 800, ease: 'Back.out' });
                 if (!this.isManualMode && window.playCoinsSfx) window.playCoinsSfx();
@@ -309,10 +327,12 @@ export function playSequentialWins(winGroups) {
                     this.finishManualSpin(this.accumulatedWin);
                 } else if(this.isReplayMode) {
                     this.uiElements.spinBtn.setVisible(true); 
+                    if (this.uiElements.replayBackBtn) this.uiElements.replayBackBtn.setVisible(true);
                     this.uiElements.btnMinus.setVisible(false);
                     this.uiElements.btnPlus.setVisible(false);
                 } else {
                     this.uiElements.spinBtn.setVisible(true); 
+                    if (this.uiElements.replayBackBtn) this.uiElements.replayBackBtn.setVisible(false);
                     this.uiElements.btnMinus.setVisible(true);
                     this.uiElements.btnPlus.setVisible(true);
                 }
