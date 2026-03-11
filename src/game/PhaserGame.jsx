@@ -7,13 +7,25 @@ export default function PhaserGame() {
 
   useEffect(() => {
     /**
+     * Detecta si el dispositivo se comporta como móvil/tablet táctil.
+     * No requiere parámetros.
+     */
+    const isMobileLikeDevice = () => {
+      const coarsePointer = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+      return coarsePointer || /iPhone|iPad|iPod|Android/i.test(window.navigator.userAgent || '');
+    };
+
+    /**
      * Obtiene una resolucion de render segura para dispositivos high-DPI.
      * No requiere parametros.
      */
     const getRenderResolution = () => {
       const dpr = Number(window.devicePixelRatio) || 1;
-      // Limitar a 2 evita sobrecarga fuerte en moviles antiguos.
-      return Math.min(2, Math.max(1, dpr));
+      const isMobileLike = isMobileLikeDevice();
+      // En moviles modernos permitir hasta 3 mejora mucho la nitidez (ej. iPhone retina).
+      // En escritorio mantenemos tope 2 para contener costo GPU/CPU.
+      const maxResolution = isMobileLike ? 3 : 2;
+      return Math.min(maxResolution, Math.max(1, dpr));
     };
 
     /**
@@ -43,6 +55,17 @@ export default function PhaserGame() {
       if (!game) return;
 
       const { w, h } = getViewportSize();
+      const nextResolution = getRenderResolution();
+      if (game.renderer && typeof game.renderer.setPixelRatio === 'function') {
+        game.renderer.setPixelRatio(nextResolution);
+      }
+      if (game.renderer && typeof game.renderer.resize === 'function') {
+        game.renderer.resize(w, h);
+      }
+      if (game.canvas) {
+        game.canvas.style.width = `${w}px`;
+        game.canvas.style.height = `${h}px`;
+      }
       game.scale.resize(w, h);
       game.scale.refresh();
     };
@@ -72,20 +95,26 @@ export default function PhaserGame() {
             google: { families: ['Luckiest Guy'] },
             active: function() {
                 if (!gameRef.current) {
+                    const isMobileLike = isMobileLikeDevice();
                     const config = {
-                        type: window.Phaser.AUTO,
+                        type: window.Phaser.WEBGL,
                         resolution: getRenderResolution(),
-                        autoRound: false,
+                        autoRound: isMobileLike,
                         antialias: true,
                         pixelArt: false,
-                        roundPixels: false,
+                        roundPixels: isMobileLike,
                         render: {
                           antialias: true,
                           pixelArt: false,
-                          roundPixels: false,
+                          roundPixels: isMobileLike,
                           powerPreference: 'high-performance'
                         },
-                        scale: { mode: window.Phaser.Scale.RESIZE, parent: 'phaser-container', width: '100%', height: '100%' },
+                        scale: {
+                          mode: window.Phaser.Scale.RESIZE,
+                          parent: 'phaser-container',
+                          width: getViewportSize().w,
+                          height: getViewportSize().h
+                        },
                         backgroundColor: '#000000',
                         scene: [BootScene, LoadingScene, MainScene]
                     };
