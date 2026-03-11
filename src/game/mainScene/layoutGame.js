@@ -100,7 +100,9 @@ export function applyGameLayout({
             : null;
 
         const isCompactPortraitHud = w <= thresholds.compactPortraitMaxW || h <= thresholds.compactPortraitMaxH;
-        const isVeryCompactPortraitHud = w <= thresholds.veryCompactPortraitMaxW || h <= thresholds.veryCompactPortraitMaxH;
+        // Solo tratar como "muy compacto" cuando BOTH ancho y alto son reducidos.
+        // Con OR, iPhones normales entraban en este modo y el tablero se achicaba de más.
+        const isVeryCompactPortraitHud = w <= thresholds.veryCompactPortraitMaxW && h <= thresholds.veryCompactPortraitMaxH;
         const isMidPortraitHud = w >= thresholds.midPortraitMinW && w <= thresholds.midPortraitMaxW;
         const infoScaleBase = isCompactPortraitHud
             ? Phaser.Math.Clamp(w / gamePortraitCfg.infoScaleCompactWidthDivisor, gamePortraitCfg.infoScaleCompactMin, gamePortraitCfg.infoScaleCompactMax)
