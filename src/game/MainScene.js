@@ -74,6 +74,9 @@ export class MainScene extends Phaser.Scene {
         this.manualResults = [];
         this.manualAccumulatedWin = 0;
         this.currentManualSpinWin = 0;
+        this.currentManualSpinData = null;
+        this.manualSpinDataByIndex = [];
+        this.isAutoPackMode = false;
 
         this.isReplayMode = false;
         this.replaySource = ''; 

@@ -80,6 +80,13 @@ export function useAudioEngine({ isMuted, musicVolume, sfxVolume }) {
     };
 
     /**
+     * Convierte un valor MIDI a frecuencia en Hz.
+     * Parámetros:
+     * - `midi` (number): Nota MIDI.
+     */
+    const midiToFreq = (midi) => 440 * Math.pow(2, (Number(midi) - 69) / 12);
+
+    /**
      * Reproduce un barrido de frecuencia (sweep) con envolvente.
      * Parámetros:
      * - `from` (number): Frecuencia inicial del barrido en Hz.
@@ -249,6 +256,32 @@ export function useAudioEngine({ isMuted, musicVolume, sfxVolume }) {
     const startMusicLoop = () => {
       if (musicTimerRef.current) return;
 
+      // Loop chiptune enérgico (inspiración arcade retro, sin copiar melodías existentes).
+      const BPM = 142;
+      const STEP_MS = Math.round((60 / BPM) * 1000 / 2); // corcheas
+      const LEAD_PATTERN_MIDI = [
+        76, null, 79, null, 81, 79, 76, null,
+        72, null, 76, null, 79, 76, 74, null,
+        76, null, 79, null, 81, 83, 81, null,
+        79, null, 76, null, 74, 72, 74, null
+      ];
+      const BASS_PATTERN_MIDI = [
+        45, null, 45, null, 48, null, 52, null,
+        43, null, 43, null, 47, null, 50, null,
+        45, null, 45, null, 48, null, 52, null,
+        40, null, 40, null, 43, null, 47, null
+      ];
+      const CHORD_PATTERN_MIDI = [
+        [57, 60, 64], // A minor
+        [55, 59, 62], // G
+        [53, 57, 60], // F
+        [52, 55, 59], // E minor
+        [57, 60, 64], // A minor
+        [55, 59, 62], // G
+        [57, 60, 64], // A minor
+        [52, 55, 59] // E minor
+      ];
+
       /**
        * Ejecuta un paso melódico del loop continuo.
        * No requiere parámetros.
@@ -258,19 +291,80 @@ export function useAudioEngine({ isMuted, musicVolume, sfxVolume }) {
         const music = clamp01((musicVolumeRef.current || 0) / 100);
         if (music <= 0) return;
 
-        // Progresión corta y suave para loop continuo de fondo.
-        const melody = [261.63, 293.66, 329.63, 392.0, 329.63, 293.66];
-        const step = musicStepRef.current % melody.length;
-        const lead = melody[step];
-        const harmony = lead * 0.5;
-        musicStepRef.current += 1;
+        const step = musicStepRef.current % LEAD_PATTERN_MIDI.length;
+        const swingDelay = step % 2 === 1 ? 0.012 : 0;
+        const leadMidi = LEAD_PATTERN_MIDI[step];
+        const bassMidi = BASS_PATTERN_MIDI[step];
 
-        playTone({ frequency: lead, duration: 0.58, gain: 0.04 * music, type: 'triangle' });
-        playTone({ frequency: harmony, duration: 0.52, gain: 0.024 * music, type: 'sine', when: 0.02 });
+        if (step % 4 === 0) {
+          const chordIndex = Math.floor(step / 4) % CHORD_PATTERN_MIDI.length;
+          const chord = CHORD_PATTERN_MIDI[chordIndex];
+          chord.forEach((note, idx) => {
+            playTone({
+              frequency: midiToFreq(note),
+              duration: 0.36,
+              gain: (idx === 0 ? 0.016 : 0.012) * music,
+              type: 'sine',
+              when: 0.01
+            });
+          });
+        }
+
+        if (bassMidi != null) {
+          playTone({
+            frequency: midiToFreq(bassMidi),
+            duration: 0.20,
+            gain: 0.05 * music,
+            type: 'triangle',
+            when: swingDelay
+          });
+        }
+
+        if (leadMidi != null) {
+          playTone({
+            frequency: midiToFreq(leadMidi),
+            duration: 0.18,
+            gain: 0.042 * music,
+            type: 'square',
+            when: swingDelay
+          });
+          playTone({
+            frequency: midiToFreq(leadMidi + 12),
+            duration: 0.08,
+            gain: 0.012 * music,
+            type: 'triangle',
+            when: swingDelay + 0.01
+          });
+        }
+
+        // Hat sintético sutil para mover el groove.
+        if (step % 2 === 1) {
+          playSweep({
+            from: 4200,
+            to: 1600,
+            duration: 0.03,
+            gain: 0.012 * music,
+            type: 'square',
+            when: 0.002
+          });
+        }
+
+        // Acento "moneda" al final de cada compás.
+        if (step % 8 === 7) {
+          playTone({
+            frequency: midiToFreq(88),
+            duration: 0.06,
+            gain: 0.018 * music,
+            type: 'triangle',
+            when: 0.01
+          });
+        }
+
+        musicStepRef.current += 1;
       };
 
       runStep();
-      musicTimerRef.current = setInterval(runStep, 620);
+      musicTimerRef.current = setInterval(runStep, STEP_MS);
     };
 
     /**

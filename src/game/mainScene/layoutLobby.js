@@ -70,7 +70,18 @@ export function applyLobbyLayout({
                 buttonHalfHeight: 60,
                 bottomSafeMargin: 24
             };
-        const lobbyCfg = { ...lobbyBase, ...lobbyOverrides };
+        // Resolver overrides expresados como ratio: se convierten a px según el alto actual.
+        // Fallback al valor en píxeles original para compatibilidad con configs existentes.
+        const lobbyCfgRaw = { ...lobbyBase, ...lobbyOverrides };
+        const lobbyCfg = {
+            ...lobbyCfgRaw,
+            portraitButtonsGap: lobbyCfgRaw.portraitButtonsGapRatio != null
+                ? lobbyCfgRaw.portraitButtonsGapRatio * h
+                : lobbyCfgRaw.portraitButtonsGap,
+            titleGapFromJackpot: lobbyCfgRaw.titleGapFromJackpotRatio != null
+                ? lobbyCfgRaw.titleGapFromJackpotRatio * h
+                : lobbyCfgRaw.titleGapFromJackpot
+        };
         const isMobilePortraitLobby = isPortrait && w <= 520;
         const jackpotTop = isMobilePortraitLobby
             ? (lobbyCfg.jackpotTopMobile ?? lobbyCfg.jackpotTop)

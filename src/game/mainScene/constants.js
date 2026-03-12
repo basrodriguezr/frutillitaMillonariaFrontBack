@@ -93,14 +93,14 @@ const VIEWPORT_SCALE_MODEL = {
         },
         sections: {
             lobby: 0.86,
-            shop: 0.82,
-            shopCards: 0.82,
-            shopResult: 0.84,
+            shop: 0.94,
+            shopCards: 0.94,
+            shopResult: 0.94,
             // En landscape móvil priorizamos tablero visible y reducimos panel derecho.
             gameBoard: 1.0,
             gameInfo: 0.72,
             gameControls: 0.70,
-            shopTitle: 0.86
+            shopTitle: 0.94
         },
         thresholds: {
             compactPortraitMaxW: 760,
@@ -221,8 +221,10 @@ const VIEWPORT_RANGE_OVERRIDES = [
                 // manteniendo proporcionalidad entre 844x390 y 667x375.
                 panelXOffset: 0,
                 panelXOffsetFactor: 0,
-                panelGlobalYOffset: -22,
-                controlsYShortGap: 96,
+                // Ratio proporcional al alto del viewport (diseño base: 390px landscape)
+                panelGlobalYOffsetRatio: -22 / 390,
+                // Ratio proporcional al alto del viewport
+                controlsYShortGapRatio: 96 / 390,
                 // Compactar controles derechos en landscape corto.
                 panelScaleVeryShortMax: 0.72,
                 panelScaleShortMax: 0.80,
@@ -240,7 +242,7 @@ const VIEWPORT_RANGE_OVERRIDES = [
         overrides: {
             gameLandscape: {
                 forceNarrowLayout: true,
-                panelGlobalYOffset: 0
+                panelGlobalYOffsetRatio: 0
             }
         }
     },
@@ -253,7 +255,8 @@ const VIEWPORT_RANGE_OVERRIDES = [
         overrides: {
             gameLandscape: {
                 forceNarrowLayout: true,
-                panelGlobalYOffset: 50
+                // Ratio proporcional al alto del viewport (diseño base: 900px desktop)
+                panelGlobalYOffsetRatio: 50 / 900
             }
         }
     },
@@ -290,7 +293,8 @@ const VIEWPORT_RANGE_OVERRIDES = [
                 landscapeStackButtonsGap: 150,
                 landscapeButtonsGap: 24,
                 landscapeStackScaleThreshold: 1,
-                portraitButtonsGap: 150
+                // Ratio proporcional al alto del viewport (portrait ≤905px ancho, diseño base: 844px)
+                portraitButtonsGapRatio: 150 / 844
             }
         }
     },
@@ -350,13 +354,15 @@ const VIEWPORT_RANGE_OVERRIDES = [
                 gameBoardScaleMax: 1.08
             },
             gamePortrait: {
-                controlsGlobalYOffset: -80,
-                contWinGlobalYOffset: 10,
+                // Ratios proporcionales al alto del viewport (rango objetivo: 980-1060px)
+                controlsGlobalYOffsetRatio: -80 / 1020,
+                contWinGlobalYOffsetRatio: 10 / 1020,
                 portraitWidthFactorMid: 1.08,
                 gameBottomGapToWin: 36
             },
             hud: {
-                dockBoardOffset: -150
+                // Ratio proporcional al alto del viewport (rango objetivo: 980-1060px)
+                dockBoardOffsetRatio: -150 / 1020
             }
         }
     },
@@ -371,7 +377,8 @@ const VIEWPORT_RANGE_OVERRIDES = [
         },
         overrides: {
             lobby: {
-                portraitButtonsGap: 150
+                // Ratio proporcional al alto del viewport (rango objetivo: 1260-1400px, mid ≈ 1330px)
+                portraitButtonsGapRatio: 150 / 1330
             }
         }
     },
@@ -386,7 +393,8 @@ const VIEWPORT_RANGE_OVERRIDES = [
         },
         overrides: {
             lobby: {
-                portraitButtonsGap: 150
+                // Ratio proporcional al alto del viewport (rango objetivo: 1260-1420px, mid ≈ 1340px)
+                portraitButtonsGapRatio: 150 / 1340
             }
         }
     },
@@ -401,7 +409,8 @@ const VIEWPORT_RANGE_OVERRIDES = [
         },
         overrides: {
             lobby: {
-                titleGapFromJackpot: 100
+                // Ratio proporcional al alto del viewport (rango objetivo: 660-940px, mid ≈ 800px)
+                titleGapFromJackpotRatio: 100 / 800
             },
             // Ejemplos:
             // shop: { portraitButtonsGap: 120 },
