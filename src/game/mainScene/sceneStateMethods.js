@@ -32,6 +32,8 @@ export function showLobby() {
     this.interruptSpinKeepingPending();
     this.isReplayMode = false;
     this.isManualMode = false;
+    this.isAutoPackMode = false;
+    this.currentManualSpinData = null;
     this.resetBoardState();
     this.hideAllLayers();
     this.bg.setTint(0x1a2235);
@@ -48,6 +50,8 @@ export function showLobby() {
 export function showGame() {
     this.isReplayMode = false;
     this.isManualMode = false;
+    this.isAutoPackMode = false;
+    this.currentManualSpinData = null;
     this.hideAllLayers();
     this.bg.clearTint();
     this.layerGame.setVisible(true).setAlpha(1);
@@ -88,6 +92,8 @@ export function showShop(options = {}) {
     this.interruptSpinKeepingPending();
     this.isReplayMode = false;
     this.isManualMode = false;
+    this.isAutoPackMode = false;
+    this.currentManualSpinData = null;
     this.resetBoardState();
     if (resetState) {
         this.resetShopState();
@@ -111,6 +117,7 @@ export function resetShopState() {
     this.shopQty = 5;
     this.currentShopQty = 5;
     this.currentShopWin = 0;
+    this.manualSpinDataByIndex = [];
 
     if (this.uiElements.betBox) {
         this.uiElements.betBox.val.setText('$' + this.formatPoints(BET_VALUES[this.currentBetIndex]));

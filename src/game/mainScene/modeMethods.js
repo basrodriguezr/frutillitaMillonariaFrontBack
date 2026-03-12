@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import { BET_VALUES, CELL_H, CELL_W } from './constants';
 
 const MANUAL_PACK_PENDING_KEY = 'frutilla_pending_manual_pack_v1';
@@ -243,6 +244,103 @@ function shouldShowTicketTags(scene) {
 }
 
 /**
+ * Revela una tarjeta del pack en shop, deja replay asociado y habilita botón VER.
+ * Parámetros:
+ * - `scene` (object): Instancia de la escena principal.
+ * - `cardIndex` (number): Índice de tarjeta a revelar (base 0).
+ * - `replayData` (object): Datos completos de la jugada para replay.
+ * - `replayBet` (number): Apuesta usada en esa jugada.
+ */
+function revealPackCard(scene, cardIndex, replayData, replayBet) {
+    const card = scene?.shopCards?.[cardIndex];
+    if (!card || !replayData) {
+        return {
+            prize: Math.max(0, Number(replayData?.totalWin) || 0),
+            ticketId: null
+        };
+    }
+
+    const prize = Math.max(0, Number(replayData.totalWin) || 0);
+    const cm = card.contentMetrics || scene.getShopCardContentMetrics(card.cardW, card.cardH);
+    card.replayData = replayData;
+    card.replayBet = replayBet;
+    card.ticketId = card.ticketId || scene.generateTicketId();
+
+    if (card.ticketTag) {
+        card.ticketTag.setText(`TICKET ${cardIndex + 1}`);
+        card.ticketTag.setVisible(shouldShowTicketTags(scene));
+    }
+
+    const isWin = prize > 0;
+    card.bg.clear();
+    card.bg.fillStyle(isWin ? 0x1e3a8a : 0x222222, 1);
+    card.bg.lineStyle(2, isWin ? 0xFFD700 : 0x555555, 1);
+    card.bg.fillRoundedRect(-card.cardW / 2, -card.cardH / 2, card.cardW, card.cardH, 10);
+    card.bg.strokeRoundedRect(-card.cardW / 2, -card.cardH / 2, card.cardW, card.cardH, 10);
+
+    card.txt.setText(isWin ? `$${scene.formatPoints(prize)}` : 'SIN\nPREMIO');
+    card.txt.setFontSize(`${isWin ? cm.winFont : cm.loseFont}px`);
+    card.txt.setColor(isWin ? '#FFD700' : '#888888');
+    card.txt.setY(cm.resultTextY);
+    card.txt.setLineSpacing(cm.lineSpacing);
+    if (isWin) {
+        const maxTextWidth = Math.max(38, card.cardW - 12);
+        let fitFont = cm.winFont;
+        while (fitFont > cm.minWinFont && card.txt.width > maxTextWidth) {
+            fitFont -= 1;
+            card.txt.setFontSize(`${fitFont}px`);
+        }
+    }
+
+    card.btnVerBg.clear();
+    card.btnVerBg.fillStyle(0x00C853, 1);
+    card.btnVerBg.lineStyle(1, 0xffffff, 0.8);
+    card.btnVerBg.fillRoundedRect(-(cm.verBtnWidth / 2), cm.verBtnTopY, cm.verBtnWidth, cm.verBtnHeight, cm.verBtnRadius);
+    card.btnVerBg.strokeRoundedRect(-(cm.verBtnWidth / 2), cm.verBtnTopY, cm.verBtnWidth, cm.verBtnHeight, cm.verBtnRadius);
+    card.btnVerTxt.setY(cm.verBtnCenterY);
+    card.btnVerTxt.setFontSize(`${cm.verBtnFont}px`);
+    card.btnVerBg.setVisible(true);
+    card.btnVerTxt.setVisible(true);
+
+    card.hit.setInteractive({ cursor: 'pointer' });
+    card.hit.removeAllListeners('pointerup');
+    card.hit.on('pointerup', () => {
+        if (scene.isSpinning) return;
+        if (window.playButtonSfx) window.playButtonSfx();
+        scene.setupReplay({ replayData: card.replayData, replayBet: card.replayBet }, 'shop');
+    });
+
+    return { prize, ticketId: card.ticketId };
+}
+
+/**
+ * Muestra estado final de pack en juego con botón de regreso al shop.
+ * Parámetros:
+ * - `scene` (object): Instancia de la escena principal.
+ */
+function showPackFinishBackButton(scene) {
+    scene.isSpinning = false;
+    scene.isReplayMode = false;
+    scene.replaySource = 'shop';
+    scene.isAutoPackMode = false;
+    scene.currentManualSpinData = null;
+
+    scene.uiElements.manualControlsGroup.setVisible(false);
+    scene.uiElements.replayControlsGroup.setVisible(false);
+    scene.uiElements.controlsGroup.setVisible(true);
+    scene.uiElements.spinBtn.setVisible(false);
+    scene.uiElements.btnMinus.setVisible(false);
+    scene.uiElements.btnPlus.setVisible(false);
+    if (scene.uiElements.replayBackBtn) {
+        scene.uiElements.replayBackBtn.setVisible(true);
+        scene.uiElements.replayBackBtn.setScale(0.82).setX(0);
+    }
+    scene.replayTitleBox.setVisible(false);
+    if (window.setReactSpinning) window.setReactSpinning(false);
+    scene.applyResponsiveLayout({ width: scene.scale.width, height: scene.scale.height });
+}
+
+/**
  * Indica si existe un pack manual pendiente por continuar.
  * No requiere parámetros.
  */
@@ -284,101 +382,47 @@ export function hasAnyPendingPlay() {
  * - `totalCost` (number): Costo total del pack comprado.
  */
 export function startAutoReveal(qty, totalCost) {
-        this.balance -= totalCost;
-        this.uiElements.contBalance.val.setText("$" + this.formatPoints(this.balance));
-        this.addJackpotContribution(totalCost);
+    this.balance -= totalCost;
+    this.uiElements.contBalance.val.setText("$" + this.formatPoints(this.balance));
+    this.addJackpotContribution(totalCost);
 
-        this.currentShopWin = 0;
-        this.shopTotalWinBox.val.setText("$0");
-        this.shopTotalWinBox.container.setVisible(true);
+    const betVal = BET_VALUES[this.currentBetIndex];
+    this.shopQty = qty;
+    this.currentShopQty = qty;
+    this.drawShopCards(this.shopQty);
+    this.currentShopWin = 0;
+    this.shopTotalWinBox.val.setText("$0");
+    this.shopTotalWinBox.container.setVisible(true);
 
-        const betVal = BET_VALUES[this.currentBetIndex];
+    this.isManualMode = true;
+    this.isAutoPackMode = true;
+    this.isReplayMode = false;
+    this.manualTotal = qty;
+    this.manualCurrent = 1;
+    this.manualBet = betVal;
+    this.manualResults = [];
+    this.manualAccumulatedWin = 0;
+    this.currentManualSpinWin = 0;
+    this.currentManualSpinData = null;
+    this.manualSpinDataByIndex = Array.from({ length: qty }, () => null);
+    clearManualPackPending();
 
-        for (let i = 0; i < qty; i++) {
-            if(!this.shopCards[i]) break;
-            const card = this.shopCards[i];
-            
-            const mockData = this.generateMockSpin(betVal);
-            card.replayData = mockData;
-            card.replayBet = betVal;
-            card.ticketId = this.generateTicketId();
-            if (card.ticketTag) {
-                card.ticketTag.setText(`TICKET ${i + 1}`);
-                card.ticketTag.setVisible(shouldShowTicketTags(this));
-            }
+    setupManualModeView(this);
+    this.uiElements.btnManualNext.setVisible(false);
+    this.uiElements.lblManualStatus.setText(`JUGADA ${this.manualCurrent} DE ${this.manualTotal}`);
+    this.uiElements.manualBetBox.val.setText("$" + this.formatPoints(this.manualBet));
+    this.uiElements.contWin.val.setText("$0");
+    this.uiElements.contWin.val.setFontSize('40px');
+    this.uiElements.contWin.val.setColor('#FFF');
 
-            this.time.delayedCall(i * 280, () => {
-                this.tweens.add({
-                    targets: card, scaleX: 0, duration: 220, yoyo: true,
-                    onYoyo: () => {
-                        const cm = card.contentMetrics || this.getShopCardContentMetrics(card.cardW, card.cardH);
-                        const prize = card.replayData.totalWin;
-                        const isWin = prize > 0;
+    this.resetBoardState();
+    this.applyResponsiveLayout({ width: this.scale.width, height: this.scale.height });
+    if (window.setCurrentScreen) window.setCurrentScreen('game');
 
-                        this.addHistoryEntry({
-                            ticketId: card.ticketId,
-                            bet: betVal,
-                            win: prize,
-                            mode: 'tickets-auto'
-                        });
-
-                        this.currentShopWin += prize;
-                        this.shopTotalWinBox.val.setText("$" + this.formatPoints(this.currentShopWin));
-                        
-                        if (isWin) {
-                            if (window.playPackWinSfx) window.playPackWinSfx();
-                            this.balance += prize;
-                            this.uiElements.contBalance.val.setText("$" + this.formatPoints(this.balance));
-
-                            this.tweens.add({
-                                targets: this.shopTotalWinBox.val, scaleX: 1.2, scaleY: 1.2, duration: 100, yoyo: true
-                            });
-                        } else if (window.playPackLoseSfx) {
-                            window.playPackLoseSfx();
-                        }
-
-                        card.bg.clear();
-                        card.bg.fillStyle(isWin ? 0x1e3a8a : 0x222222, 1); 
-                        card.bg.lineStyle(2, isWin ? 0xFFD700 : 0x555555, 1);
-                        card.bg.fillRoundedRect(-card.cardW/2, -card.cardH/2, card.cardW, card.cardH, 10);
-                        card.bg.strokeRoundedRect(-card.cardW/2, -card.cardH/2, card.cardW, card.cardH, 10);
-                        
-                        card.txt.setText(isWin ? `$${this.formatPoints(prize)}` : `SIN\nPREMIO`);
-                        card.txt.setFontSize(`${isWin ? cm.winFont : cm.loseFont}px`);
-                        card.txt.setColor(isWin ? '#FFD700' : '#888888');
-                        card.txt.setY(cm.resultTextY);
-                        card.txt.setLineSpacing(cm.lineSpacing);
-                        if (isWin) {
-                            const maxTextWidth = Math.max(38, card.cardW - 12);
-                            let fitFont = cm.winFont;
-                            while (fitFont > cm.minWinFont && card.txt.width > maxTextWidth) {
-                                fitFont -= 1;
-                                card.txt.setFontSize(`${fitFont}px`);
-                            }
-                        }
-
-                        card.btnVerBg.clear();
-                        card.btnVerBg.fillStyle(0x00C853, 1); 
-                        card.btnVerBg.lineStyle(1, 0xffffff, 0.8);
-                        card.btnVerBg.fillRoundedRect(-(cm.verBtnWidth / 2), cm.verBtnTopY, cm.verBtnWidth, cm.verBtnHeight, cm.verBtnRadius);
-                        card.btnVerBg.strokeRoundedRect(-(cm.verBtnWidth / 2), cm.verBtnTopY, cm.verBtnWidth, cm.verBtnHeight, cm.verBtnRadius);
-                        card.btnVerTxt.setY(cm.verBtnCenterY);
-                        card.btnVerTxt.setFontSize(`${cm.verBtnFont}px`);
-                        card.btnVerBg.setVisible(true);
-                        card.btnVerTxt.setVisible(true);
-
-                        card.hit.setInteractive({cursor:'pointer'});
-                        card.hit.removeAllListeners('pointerup');
-                        card.hit.on('pointerup', () => {
-                            if(this.isSpinning) return;
-                            if (window.playButtonSfx) window.playButtonSfx();
-                            if(window.gameRef) window.gameRef.setupReplay({ replayData: card.replayData, replayBet: card.replayBet }, 'shop');
-                        });
-                    }
-                });
-            });
-        }
-    }
+    this.time.delayedCall(350, () => {
+        this.executeManualSpin();
+    });
+}
 
 /**
  * Inicializa modo manual para abrir tickets uno por uno.
@@ -392,13 +436,24 @@ export function startManualMode(qty, betVal, totalCost) {
         this.uiElements.contBalance.val.setText("$" + this.formatPoints(this.balance));
         this.addJackpotContribution(totalCost);
 
+        this.shopQty = qty;
+        this.currentShopQty = qty;
+        this.drawShopCards(this.shopQty);
+        this.currentShopWin = 0;
+        this.shopTotalWinBox.val.setText("$0");
+        this.shopTotalWinBox.container.setVisible(true);
+
         this.isManualMode = true;
+        this.isAutoPackMode = false;
+        this.isReplayMode = false;
         this.manualTotal = qty;
         this.manualCurrent = 1;
         this.manualBet = betVal;
         this.manualResults = [];
         this.manualAccumulatedWin = 0;
         this.currentManualSpinWin = 0;
+        this.currentManualSpinData = null;
+        this.manualSpinDataByIndex = Array.from({ length: qty }, () => null);
 
         persistManualPackState(this, {
             current: 1,
@@ -454,12 +509,15 @@ export function executeManualSpin() {
         if (this.currentSpeedLevel === 2) { animDuration = 500; colDelay = 80; rowDelay = 20; } 
 
         const data = this.generateMockSpin(this.manualBet);
+        this.currentManualSpinData = data;
         this.currentManualSpinWin = data.totalWin;
 
-        persistManualPackState(this, {
-            hasActiveSpin: true,
-            spinData: data
-        });
+        if (!this.isAutoPackMode) {
+            persistManualPackState(this, {
+                hasActiveSpin: true,
+                spinData: data
+            });
+        }
 
         playSpinAnimation(this, data, { animDuration, colDelay, rowDelay });
     }
@@ -478,6 +536,9 @@ export function finishManualSpin(winAmount) {
         const currentSpinWin = Math.max(0, Number(winAmount) || 0);
         this.manualAccumulatedWin = (Number(this.manualAccumulatedWin) || 0) + currentSpinWin;
         this.currentManualSpinWin = currentSpinWin;
+        this.currentShopWin = this.manualAccumulatedWin;
+        this.shopTotalWinBox.val.setText("$" + this.formatPoints(this.currentShopWin));
+        this.shopTotalWinBox.container.setVisible(true);
         if (currentSpinWin > 0) {
             this.uiElements.contWin.val.setText("$" + this.formatPoints(currentSpinWin));
             this.uiElements.contWin.val.setFontSize('40px');
@@ -488,32 +549,49 @@ export function finishManualSpin(winAmount) {
             this.uiElements.contWin.val.setColor('#FFFFFF');
         }
 
+        const spinIndex = Phaser.Math.Clamp((this.manualCurrent || 1) - 1, 0, Math.max(0, this.manualTotal - 1));
+        const replayDataForCard = this.currentManualSpinData || this.generateHistoryMockSpin(this.manualBet, currentSpinWin);
+        this.manualSpinDataByIndex[spinIndex] = replayDataForCard;
+        const cardState = revealPackCard(this, spinIndex, replayDataForCard, this.manualBet);
+        const ticketId = cardState.ticketId || this.generateTicketId();
+
         this.manualResults.push({
             spinNum: this.manualCurrent,
             bet: this.manualBet,
-            win: winAmount
+            win: currentSpinWin
         });
 
         this.addHistoryEntry({
-            ticketId: this.generateTicketId(),
+            ticketId,
             bet: this.manualBet,
-            win: winAmount,
-            mode: 'tickets-manual'
+            win: currentSpinWin,
+            mode: this.isAutoPackMode ? 'tickets-auto' : 'tickets-manual'
         });
 
-        if(this.manualCurrent < this.manualTotal) {
-            persistManualPackState(this, {
-                current: this.manualCurrent + 1,
-                results: this.manualResults,
-                hasActiveSpin: false,
-                spinData: null
-            });
-            this.uiElements.btnManualNext.setVisible(true);
+        this.currentManualSpinData = null;
+
+        if (this.manualCurrent < this.manualTotal) {
+            if (this.isAutoPackMode) {
+                this.manualCurrent += 1;
+                this.uiElements.lblManualStatus.setText(`JUGADA ${this.manualCurrent} DE ${this.manualTotal}`);
+                this.uiElements.btnManualNext.setVisible(false);
+                this.time.delayedCall(420, () => {
+                    if (!this.isSpinning && this.isAutoPackMode) {
+                        this.executeManualSpin();
+                    }
+                });
+            } else {
+                persistManualPackState(this, {
+                    current: this.manualCurrent + 1,
+                    results: this.manualResults,
+                    hasActiveSpin: false,
+                    spinData: null
+                });
+                this.uiElements.btnManualNext.setVisible(true);
+            }
         } else {
             clearManualPackPending();
-            this.time.delayedCall(500, () => {
-                if(window.showSummaryModal) window.showSummaryModal(this.manualResults);
-            });
+            showPackFinishBackButton(this);
         }
     }
 
@@ -534,6 +612,7 @@ export function playPendingSpin(savedData) {
             }
 
             this.isManualMode = true;
+            this.isAutoPackMode = false;
             this.isReplayMode = false;
             this.manualTotal = pendingPack.total;
             this.manualCurrent = pendingPack.current;
@@ -541,6 +620,23 @@ export function playPendingSpin(savedData) {
             this.manualResults = [...pendingPack.results];
             this.manualAccumulatedWin = this.manualResults.reduce((acc, result) => acc + (Number(result?.win) || 0), 0);
             this.currentManualSpinWin = Number(this.manualResults[this.manualResults.length - 1]?.win) || 0;
+            this.currentManualSpinData = pendingPack.hasActiveSpin && pendingPack.spinData ? pendingPack.spinData : null;
+            this.manualSpinDataByIndex = Array.from({ length: this.manualTotal }, () => null);
+            this.shopQty = this.manualTotal;
+            this.currentShopQty = this.manualTotal;
+            this.drawShopCards(this.shopQty);
+            this.currentShopWin = this.manualAccumulatedWin;
+            if (this.shopTotalWinBox) {
+                this.shopTotalWinBox.val.setText("$" + this.formatPoints(this.currentShopWin));
+                this.shopTotalWinBox.container.setVisible(true);
+            }
+
+            for (let i = 0; i < this.manualResults.length; i++) {
+                const result = this.manualResults[i];
+                const replayData = this.generateHistoryMockSpin(result?.bet || this.manualBet, Number(result?.win) || 0);
+                this.manualSpinDataByIndex[i] = replayData;
+                revealPackCard(this, i, replayData, this.manualBet);
+            }
 
             setupManualModeView(this);
             this.uiElements.lblManualStatus.setText(`JUGADA ${this.manualCurrent} DE ${this.manualTotal}`);
@@ -572,7 +668,7 @@ export function playPendingSpin(savedData) {
             } else {
                 this.isSpinning = false;
                 if(window.setReactSpinning) window.setReactSpinning(false);
-                this.uiElements.btnManualNext.setVisible(this.manualCurrent < this.manualTotal + 1);
+                this.uiElements.btnManualNext.setVisible(this.manualCurrent <= this.manualTotal);
             }
             return;
         }

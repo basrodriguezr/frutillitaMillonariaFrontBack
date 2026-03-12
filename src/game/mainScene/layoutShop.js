@@ -76,7 +76,7 @@ export function applyShopLayout({
             leftScaleLandscapeWidthFactor: 0.42,
             leftScaleLandscapeHeightFactor: 0.46,
             leftScaleLandscapeDivisor: 200,
-            leftScaleLandscapeMin: 0.82,
+            leftScaleLandscapeMin: 0.54,
             leftScaleLandscapeMax: 1.10,
             leftScaleFinalMinPortrait: 0.62,
             leftScaleFinalMinLandscape: 0.54,
@@ -96,6 +96,11 @@ export function applyShopLayout({
             topRightTopDefault: 112,
             topRightBottomShort: 72,
             topRightBottomDefault: 110,
+            // Ratios proporcionales al alto del viewport (referencia: h=900 desktop)
+            topLeftTopRatio: 95 / 900,
+            topLeftBottomRatio: 62 / 900,
+            topRightTopRatio: 112 / 900,
+            topRightBottomRatio: 110 / 900,
             shopResultXPortraitSplitRatio: 0.22,
             shopResultScaleSplitMultiplier: 0.92,
             shopResultScalePortraitMultiplier: 0.86,
@@ -145,10 +150,12 @@ export function applyShopLayout({
             resultGapTopDefaultBase: 14,
             reservedResultHalfMobile: 62,
             topRightYOffsetNarrow: 8,
-            rightPanelBaseNarrow: 0.28,
+            rightPanelBaseNarrow: 0.24,
             rightPanelBaseDefault: 0.24,
             topLeftXRatio: -0.25,
             topRightXExtraOffset: 100,
+            // Ratio proporcional al shopLayoutWidth (referencia: shopLayoutWidth≈1264 desktop)
+            topRightXExtraOffsetRatio: 100 / 1264,
             rightPanelVisualLiftLandscape: 22,
             maxWidthPortraitRatio: 0.95,
             maxWidthLandscapeRatio: 0.98,
@@ -163,6 +170,8 @@ export function applyShopLayout({
             portraitCardScaleMin: 0.52,
             shortLandscapeDesiredCardsShift: 50,
             cardsShiftRightSafeInset: 6,
+            landscapeCardsTopVisualGap: 8,
+            landscapeCardsTopLabelOverflowFallback: 22,
             totalWinPortraitFallbackOffset: 22,
             ticketRowYLocalBase: 20,
             maxCenterYLocalGap: 8,
@@ -174,6 +183,9 @@ export function applyShopLayout({
             minusHalfWidth: 30,
             totalWinDesiredCenterShift: 8,
             totalWinCenterEdgeGap: 6,
+            landscapeResultOwnRowMaxWidth: 1100,
+            landscapeResultRowGapBase: 10,
+            landscapeResultOwnRowToCardsGap: 30,
             shopLandscapeTitleScaleMultiplier: 0.56,
             shopLandscapeTitleScaleMin: 0.52,
             shopLandscapeTitleScaleMax: 0.86,
@@ -203,11 +215,9 @@ export function applyShopLayout({
         const shopBottomReserve = isPortrait
             ? Phaser.Math.Clamp(shopBottomReserveBase + Math.max(0, shopBottomInset), shopBottomReserveBase, shopCfg.bottomReservePortraitMax)
             : shopCfg.bottomReserveLandscape;
-        const isShortLandscapeShop = !isPortrait && h <= thresholds.shortLandscapeShopMaxH;
+
         const spacing = Math.round(
-            (isPortrait
-                ? shopCfg.spacingPortrait
-                : (isShortLandscapeShop ? shopCfg.spacingLandscapeShort : shopCfg.spacingLandscape))
+            (isPortrait ? shopCfg.spacingPortrait : shopCfg.spacingLandscape)
             * Phaser.Math.Clamp(shopScaleFactor, shopCfg.spacingScaleMin, shopCfg.spacingScaleMax)
         );
         const displayQty = portraitMobileLayout ? 20 : scene.shopQty;
@@ -233,46 +243,37 @@ export function applyShopLayout({
             : 0;
         const leftScaleBase = isPortrait
             ? Phaser.Math.Clamp(shopLayoutWidth / shopCfg.leftScalePortraitDivisor, shopCfg.leftScalePortraitMin, shopCfg.leftScalePortraitMax)
-            : (isShortLandscapeShop
-                ? Phaser.Math.Clamp(
-                    Math.min(shopLayoutWidth * shopCfg.leftScaleLandscapeShortWidthFactor, h * shopCfg.leftScaleLandscapeShortHeightFactor) / shopCfg.leftScaleLandscapeShortDivisor,
-                    shopCfg.leftScaleLandscapeShortMin,
-                    shopCfg.leftScaleLandscapeShortMax
-                )
-                : Phaser.Math.Clamp(
-                    Math.min(shopLayoutWidth * shopCfg.leftScaleLandscapeWidthFactor, h * shopCfg.leftScaleLandscapeHeightFactor) / shopCfg.leftScaleLandscapeDivisor,
-                    shopCfg.leftScaleLandscapeMin,
-                    shopCfg.leftScaleLandscapeMax
-                ));
+            : Phaser.Math.Clamp(
+                Math.min(shopLayoutWidth * shopCfg.leftScaleLandscapeWidthFactor, h * shopCfg.leftScaleLandscapeHeightFactor) / shopCfg.leftScaleLandscapeDivisor,
+                shopCfg.leftScaleLandscapeMin,
+                shopCfg.leftScaleLandscapeMax
+            );
         const leftScale = Phaser.Math.Clamp(
             leftScaleBase * shopScaleFactor,
             isPortrait ? shopCfg.leftScaleFinalMinPortrait : shopCfg.leftScaleFinalMinLandscape,
             shopCfg.leftScaleFinalMax
         );
         const useCompactInfoScale = isNarrowLandscapeShop || splitPortraitShopInfo;
-        const rightScale = leftScale * (
-            isShortLandscapeShop
-                ? shopCfg.rightScaleShortMultiplier
-                : (useCompactInfoScale ? shopCfg.rightScaleCompactMultiplier : 1)
-        );
+        const rightScale = leftScale * (useCompactInfoScale ? shopCfg.rightScaleCompactMultiplier : 1);
 
         if (scene.shopTitlePaquetes) {
             const baseTitlePx = isPortrait
                 ? (isMobilePortrait ? shopCfg.titlePxPortraitMobile : shopCfg.titlePxPortraitDefault)
-                : (isShortLandscapeShop ? shopCfg.titlePxLandscapeShort : ((!isPortrait && isNarrowLandscapeShop) ? shopCfg.titlePxLandscapeNarrow : shopCfg.titlePxLandscapeDefault));
+                : (isNarrowLandscapeShop ? shopCfg.titlePxLandscapeNarrow : shopCfg.titlePxLandscapeDefault);
             const titleSize = `${Math.round(baseTitlePx * shopTitleScaleFactor)}px`;
             if (scene.shopTitlePaquetes.style.fontSize !== titleSize) {
                 scene.shopTitlePaquetes.setFontSize(titleSize);
             }
         }
 
-        const topLeftTop = isShortLandscapeShop ? shopCfg.topLeftTopShort : shopCfg.topLeftTopDefault;
-        const topLeftBottom = isShortLandscapeShop ? shopCfg.topLeftBottomShort : shopCfg.topLeftBottomDefault;
-        const topRightTop = isShortLandscapeShop ? shopCfg.topRightTopShort : shopCfg.topRightTopDefault;
-        const topRightBottom = isShortLandscapeShop ? shopCfg.topRightBottomShort : shopCfg.topRightBottomDefault;
+        const topLeftTop = shopCfg.topLeftTopRatio != null ? shopCfg.topLeftTopRatio * h : shopCfg.topLeftTopDefault;
+        const topLeftBottom = shopCfg.topLeftBottomRatio != null ? shopCfg.topLeftBottomRatio * h : shopCfg.topLeftBottomDefault;
+        const topRightTop = shopCfg.topRightTopRatio != null ? shopCfg.topRightTopRatio * h : shopCfg.topRightTopDefault;
+        const topRightBottom = shopCfg.topRightBottomRatio != null ? shopCfg.topRightBottomRatio * h : shopCfg.topRightBottomDefault;
         let flowY = safeTop + spacing;
         let controlsBottomYWorld = flowY;
         let shopResultYWorld = null;
+        let landscapeResultOwnRow = false;
         const shopResultX = isPortrait
             ? (portraitMobileLayout ? 0 : (splitPortraitShopInfo ? shopLayoutWidth * shopCfg.shopResultXPortraitSplitRatio : 0))
             : 0;
@@ -297,10 +298,8 @@ export function applyShopLayout({
                 safeTop,
                 isPortrait
                     ? Math.min(contentWidth * shopCfg.jackpotWidthPortraitRatio, shopCfg.jackpotWidthPortraitMax)
-                    : Math.min(shopLayoutWidth * (isShortLandscapeShop ? shopCfg.jackpotWidthLandscapeShortRatio : shopCfg.jackpotWidthLandscapeRatio), shopCfg.jackpotWidthLandscapeMax),
-                isPortrait
-                    ? shopCfg.jackpotHeightRatioPortrait
-                    : (isShortLandscapeShop ? shopCfg.jackpotHeightRatioLandscapeShort : shopCfg.jackpotHeightRatioLandscape)
+                    : Math.min(shopLayoutWidth * shopCfg.jackpotWidthLandscapeRatio, shopCfg.jackpotWidthLandscapeMax),
+                isPortrait ? shopCfg.jackpotHeightRatioPortrait : shopCfg.jackpotHeightRatioLandscape
             );
         if (shopJackpot) {
             flowY = shopJackpot.bottom + spacing;
@@ -423,38 +422,80 @@ export function applyShopLayout({
             if (scene.shopTitlePaquetes) {
                 scene.shopTitlePaquetes.setVisible(true);
             }
+            // En landscape se deben forzar posiciones locales para no heredar valores de portrait.
+            scene.btnBuyShopContainer.setPosition(0, -74);
+            scene.btnShopMinus.setPosition(-110, 26);
+            scene.btnShopMinus.setScale(1);
+            scene.lblShopBetInfo.setPosition(0, 26);
+            scene.lblShopBetInfo.setFontSize('20px');
+            scene.btnShopPlus.setPosition(110, 26);
+            scene.btnShopPlus.setScale(1);
+            scene.lblShopTotal.setPosition(0, 86);
+            scene.lblShopTotal.setFontSize('24px');
+
             const topLeftYWorld = flowY + (topLeftTop * leftScale);
-            const topRightYOffset = isShortLandscapeShop ? 0 : (isNarrowLandscapeShop ? shopCfg.topRightYOffsetNarrow : 0);
+            const topRightYOffset = isNarrowLandscapeShop ? shopCfg.topRightYOffsetNarrow : 0;
             const topRightYWorld = flowY + ((topRightTop + topRightYOffset) * rightScale);
             const rightPanelBase = isNarrowLandscapeShop ? shopCfg.rightPanelBaseNarrow : shopCfg.rightPanelBaseDefault;
             const rightPanelX = shopLayoutWidth * rightPanelBase;
             const rightPanelVisualLift = shopCfg.rightPanelVisualLiftLandscape * rightScale;
+            const topRightXExtraOffset = shopCfg.topRightXExtraOffsetRatio != null
+                ? shopCfg.topRightXExtraOffsetRatio * shopLayoutWidth
+                : shopCfg.topRightXExtraOffset;
             scene.shopTopLeft.setPosition((shopCfg.topLeftXRatio * shopLayoutWidth) + landscapeShopShiftX, topLeftYWorld - centerY);
             scene.shopTopRight.setPosition(
-                rightPanelX + landscapeShopShiftX + shopCfg.topRightXExtraOffset,
+                rightPanelX + topRightXExtraOffset,
                 topRightYWorld - centerY - rightPanelVisualLift
             );
             scene.shopTopLeft.setScale(leftScale);
             scene.shopTopRight.setScale(rightScale);
-            controlsBottomYWorld = Math.max(
-                topLeftYWorld + (topLeftBottom * leftScale),
-                topRightYWorld + (topRightBottom * rightScale)
-            );
-            flowY = controlsBottomYWorld + spacing;
+            const topLeftBounds = scene.shopTopLeft.getBounds();
+            const topRightBounds = scene.shopTopRight.getBounds();
+            controlsBottomYWorld = Math.max(topLeftBounds.bottom, topRightBounds.bottom);
+
+            const rightScaleNow = scene.shopTopRight.scaleX || rightScale;
+            const resultHalfWidth = shopCfg.resultHalfWidthBase * shopResultScale;
+            const ticket20LocalX = scene.qtyButtons?.[3]?.x ?? shopCfg.ticket20LocalFallbackX;
+            const ticket20CenterX = scene.shopTopLeft.x + (ticket20LocalX * leftScale);
+            const ticket20RightEdge = ticket20CenterX + (shopCfg.ticket20RightEdgeHalfWidth * leftScale);
+            const minusCenterX = scene.shopTopRight.x + ((scene.btnShopMinus?.x ?? shopCfg.minusCenterFallbackX) * rightScaleNow);
+            const minusLeftEdge = minusCenterX - (shopCfg.minusHalfWidth * rightScaleNow);
+            const centerEdgeGap = shopCfg.totalWinCenterEdgeGap * rightScaleNow;
+            const horizontalRoom = minusLeftEdge - ticket20RightEdge;
+            const requiredRoom = (resultHalfWidth * 2) + (centerEdgeGap * 2);
+            landscapeResultOwnRow = (w < shopCfg.landscapeResultOwnRowMaxWidth) || (horizontalRoom < requiredRoom);
+
+            if (landscapeResultOwnRow) {
+                const rowGap = Math.max(spacing, shopCfg.landscapeResultRowGapBase * rightScaleNow);
+                shopResultYWorld = controlsBottomYWorld + rowGap + resultHalfHeight;
+                flowY = shopResultYWorld + resultHalfHeight + spacing + shopCfg.landscapeResultOwnRowToCardsGap;
+            } else {
+                flowY = controlsBottomYWorld + spacing;
+            }
         }
 
         const maxW = shopLayoutWidth * (isPortrait ? shopCfg.maxWidthPortraitRatio : shopCfg.maxWidthLandscapeRatio);
-        const cardsTopPadding = isShortLandscapeShop ? shopCfg.cardsTopPaddingShort : 0;
-        const cardsStartY = flowY + cardsTopPadding;
-        const cardScaleCap = portraitMobileLayout
-            ? shopCfg.portraitMobileCardScaleCap
-            : (isShortLandscapeShop ? shopCfg.cardScaleCapShort : shopCfg.cardScaleCapDefault);
+        const firstRowCard = !isPortrait && Array.isArray(scene.shopCards)
+            ? scene.shopCards.find((card) => card?.gridRow === 0 && card?.ticketTag)
+            : null;
+        let measuredTopLabelOverflowLocal = 0;
+        if (firstRowCard?.ticketTag) {
+            const tag = firstRowCard.ticketTag;
+            const tagOriginY = Number.isFinite(tag.originY) ? tag.originY : 0.5;
+            const tagTopLocal = tag.y - (tag.height * tagOriginY);
+            const cardTopLocal = -(firstRowCard.cardH / 2);
+            measuredTopLabelOverflowLocal = Math.max(0, cardTopLocal - tagTopLocal);
+        }
+        const cardsTopLabelOverflowLocal = !isPortrait
+            ? Math.max(shopCfg.landscapeCardsTopLabelOverflowFallback, measuredTopLabelOverflowLocal)
+            : 0;
+        const cardsStartY = flowY + (!isPortrait ? shopCfg.landscapeCardsTopVisualGap : 0);
+        const cardScaleCap = portraitMobileLayout ? shopCfg.portraitMobileCardScaleCap : shopCfg.cardScaleCapDefault;
         const maxH = Math.max(h - cardsStartY - shopBottomReserve, shopCfg.cardScaleMinHeight);
         let cardScale = Math.min(maxW / gridW, cardScaleCap);
         cardScale = Math.min(cardScale * shopCardsScaleFactor, cardScaleCap);
         if (!isPortrait) {
-            const cardScaleRaw = Math.min(cardScale, maxH / gridH);
-            cardScale = isShortLandscapeShop ? (cardScaleRaw * shopCfg.cardScaleShortMultiplier) : cardScaleRaw;
+            cardScale = Math.min(cardScale, maxH / (gridH + cardsTopLabelOverflowLocal));
         }
         let cardsYWorld;
         if (portraitMobileLayout) {
@@ -483,11 +524,12 @@ export function applyShopLayout({
             }
             cardsYWorld = cardsTopWorld + ((gridH * cardScale) / 2);
         } else {
-            cardsYWorld = cardsStartY + ((gridH * cardScale) / 2);
+            cardsYWorld = cardsStartY + (cardsTopLabelOverflowLocal * cardScale) + ((gridH * cardScale) / 2);
         }
         const cardsBlockHeight = gridH * cardScale;
         const cardsBlockWidth = gridW * cardScale;
         const cardsTop = cardsYWorld - (cardsBlockHeight / 2);
+        const cardsTopVisual = !isPortrait ? (cardsTop - (cardsTopLabelOverflowLocal * cardScale)) : cardsTop;
         const cardsBottom = cardsTop + cardsBlockHeight;
         if (portraitMobileLayout) {
             // En mobile portrait el bloque de apuesta debe quedar inmediatamente bajo el tablero
@@ -520,7 +562,7 @@ export function applyShopLayout({
         }
         scene.shopCardsContainer.setPosition(cardsShiftX, cardsYWorld - centerY);
         scene.shopCardsContainer.setScale(cardScale);
-        const showTicketTags = !isMobilePortrait && !isTabletPortrait && !isMobileLandscape && !isTabletLandscape;
+        const showTicketTags = !isMobilePortrait && !isTabletPortrait;
         if (Array.isArray(scene.shopCards)) {
             scene.shopCards.forEach((card) => {
                 if (!card?.ticketTag) return;
@@ -530,14 +572,15 @@ export function applyShopLayout({
         }
 
         let totalWinYWorld;
-        if (isPortrait) {
-            totalWinYWorld = (shopResultYWorld !== null)
-                ? shopResultYWorld
-                : (cardsTop - shopCfg.totalWinPortraitFallbackOffset);
+        if (shopResultYWorld !== null) {
+            totalWinYWorld = shopResultYWorld;
+        } else if (isPortrait) {
+            totalWinYWorld = cardsTop - shopCfg.totalWinPortraitFallbackOffset;
         } else {
             const cardsTopLocal = scene.shopCardsContainer.y - (cardsBlockHeight / 2);
+            const cardsTopVisualLocal = cardsTopLocal - (cardsTopLabelOverflowLocal * cardScale);
             const ticketRowYLocal = scene.shopTopLeft.y + (shopCfg.ticketRowYLocalBase * leftScale);
-            const maxCenterYLocal = cardsTopLocal - resultHalfHeight - shopCfg.maxCenterYLocalGap;
+            const maxCenterYLocal = cardsTopVisualLocal - resultHalfHeight - shopCfg.maxCenterYLocalGap;
             const minCenterYWorldForTitle = shopJackpot ? (shopJackpot.bottom + shopCfg.minCenterYFromJackpotGap) : -Infinity;
             const minCenterYLocalForTitle = minCenterYWorldForTitle - centerY;
             const preferredCenterYLocal = Math.max(ticketRowYLocal, minCenterYLocalForTitle);
@@ -550,19 +593,30 @@ export function applyShopLayout({
         } else {
             const rightScaleNow = scene.shopTopRight.scaleX || rightScale;
             const resultHalfWidth = shopCfg.resultHalfWidthBase * shopResultScale;
-            const minusCenterX = scene.shopTopRight.x + ((scene.btnShopMinus?.x ?? shopCfg.minusCenterFallbackX) * rightScaleNow);
-            const ticket20LocalX = scene.qtyButtons?.[3]?.x ?? shopCfg.ticket20LocalFallbackX;
-            const ticket20CenterX = scene.shopTopLeft.x + (ticket20LocalX * leftScale);
-            const ticket20RightEdge = ticket20CenterX + (shopCfg.ticket20RightEdgeHalfWidth * leftScale);
-            const minusLeftEdge = minusCenterX - (shopCfg.minusHalfWidth * rightScaleNow);
-            const desiredCenter = ((ticket20CenterX + minusCenterX) / 2) - (shopCfg.totalWinDesiredCenterShift * rightScaleNow);
-            const minCenterAfterTickets = ticket20RightEdge + resultHalfWidth + (shopCfg.totalWinCenterEdgeGap * rightScaleNow);
-            const maxCenterBeforeControls = minusLeftEdge - resultHalfWidth - (shopCfg.totalWinCenterEdgeGap * rightScaleNow);
-            totalWinX = Phaser.Math.Clamp(
-                desiredCenter,
-                minCenterAfterTickets,
-                Math.max(minCenterAfterTickets, maxCenterBeforeControls)
-            );
+            if (landscapeResultOwnRow) {
+                const rowCenterTarget = (scene.shopTopLeft.x + scene.shopTopRight.x) / 2;
+                const minCenter = (contentLeft - shopCenterX) + resultHalfWidth + shopCfg.cardsShiftRightSafeInset;
+                const maxCenter = (contentRight - shopCenterX) - resultHalfWidth - shopCfg.cardsShiftRightSafeInset;
+                totalWinX = Phaser.Math.Clamp(
+                    rowCenterTarget,
+                    minCenter,
+                    Math.max(minCenter, maxCenter)
+                );
+            } else {
+                const minusCenterX = scene.shopTopRight.x + ((scene.btnShopMinus?.x ?? shopCfg.minusCenterFallbackX) * rightScaleNow);
+                const ticket20LocalX = scene.qtyButtons?.[3]?.x ?? shopCfg.ticket20LocalFallbackX;
+                const ticket20CenterX = scene.shopTopLeft.x + (ticket20LocalX * leftScale);
+                const ticket20RightEdge = ticket20CenterX + (shopCfg.ticket20RightEdgeHalfWidth * leftScale);
+                const minusLeftEdge = minusCenterX - (shopCfg.minusHalfWidth * rightScaleNow);
+                const desiredCenter = ((ticket20CenterX + minusCenterX) / 2) - (shopCfg.totalWinDesiredCenterShift * rightScaleNow);
+                const minCenterAfterTickets = ticket20RightEdge + resultHalfWidth + (shopCfg.totalWinCenterEdgeGap * rightScaleNow);
+                const maxCenterBeforeControls = minusLeftEdge - resultHalfWidth - (shopCfg.totalWinCenterEdgeGap * rightScaleNow);
+                totalWinX = Phaser.Math.Clamp(
+                    desiredCenter,
+                    minCenterAfterTickets,
+                    Math.max(minCenterAfterTickets, maxCenterBeforeControls)
+                );
+            }
         }
         if (!isPortrait && scene.uiElements.landscapeGameTitle && shopJackpot) {
             const shopResultWorldX = shopCenterX + totalWinX;
@@ -574,7 +628,7 @@ export function applyShopLayout({
             const titleY = shopJackpot.bottom + (shopCfg.shopLandscapeTitleYOffset * titleScale);
             const titleHalfHeight = shopCfg.shopLandscapeTitleHalfHeightBase * titleScale;
             const minResultCenterY = titleY + titleHalfHeight + resultHalfHeight + shopCfg.shopLandscapeResultGapBelowTitle;
-            const maxResultCenterY = cardsTop - resultHalfHeight - shopCfg.shopLandscapeResultGapToCards;
+            const maxResultCenterY = cardsTopVisual - resultHalfHeight - shopCfg.shopLandscapeResultGapToCards;
             totalWinYWorld = Phaser.Math.Clamp(
                 totalWinYWorld,
                 minResultCenterY,

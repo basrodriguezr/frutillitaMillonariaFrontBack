@@ -52,7 +52,15 @@ export function applyHudAndFallbackLayout({
         dockShopTop: viewportProfile.layout.hudDockTopShop,
         dockLobbyOffset: -200
     };
-    const hudCfg = { ...hudBase, ...hudOverrides };
+    // Resolver overrides expresados como ratio: se convierten a px según el alto actual.
+    // Fallback al valor en píxeles original para compatibilidad con configs existentes.
+    const hudCfgRaw = { ...hudBase, ...hudOverrides };
+    const hudCfg = {
+        ...hudCfgRaw,
+        dockBoardOffset: hudCfgRaw.dockBoardOffsetRatio != null
+            ? hudCfgRaw.dockBoardOffsetRatio * h
+            : hudCfgRaw.dockBoardOffset
+    };
     if (scene.lblTicket) {
         const ticketX = isPortrait
             ? (w - hudCfg.ticketXPortraitOffset)

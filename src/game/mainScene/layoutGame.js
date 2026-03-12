@@ -227,12 +227,18 @@ export function applyGameLayout({
             -CONFIG_GAME.reelTotalHeight / 2 - (isMobilePortrait ? gamePortraitCfg.replayTitleYOffsetMobile : gamePortraitCfg.replayTitleYOffset)
         );
 
-        const contWinGlobalYOffset = Number(gamePortraitCfg.contWinGlobalYOffset) || 0;
+        // Si el override define un ratio, se convierte a px proporcionales al alto actual.
+        // Fallback al valor en píxeles para compatibilidad con configs anteriores.
+        const contWinGlobalYOffset = gamePortraitCfg.contWinGlobalYOffsetRatio != null
+            ? gamePortraitCfg.contWinGlobalYOffsetRatio * h
+            : (Number(gamePortraitCfg.contWinGlobalYOffset) || 0);
         const contWinRenderY = contWinY + contWinGlobalYOffset;
-        scene.uiElements.contWin.container.setPosition(w / 2, contWinRenderY); 
+        scene.uiElements.contWin.container.setPosition(w / 2, contWinRenderY);
         scene.uiElements.contWin.container.setScale(infoScale);
-        
-        const controlsGlobalYOffset = Number(gamePortraitCfg.controlsGlobalYOffset) || 0;
+
+        const controlsGlobalYOffset = gamePortraitCfg.controlsGlobalYOffsetRatio != null
+            ? gamePortraitCfg.controlsGlobalYOffsetRatio * h
+            : (Number(gamePortraitCfg.controlsGlobalYOffset) || 0);
         const controlsRenderY = controlsY + controlsGlobalYOffset;
         scene.uiElements.controlsGroup.setPosition(w / 2, controlsRenderY);
         scene.uiElements.controlsGroup.setScale(controlsScale);
@@ -522,9 +528,16 @@ export function applyGameLayout({
                     ? gameLandscapeCfg.controlsYCapMidRatio
                     : (isShortLandscapeGame ? gameLandscapeCfg.controlsYCapShortRatio : gameLandscapeCfg.controlsYCapDefaultRatio))
         );
+        // Convertir gaps de controles a px proporcionales si el override define un ratio.
+        const controlsYShortGap = gameLandscapeCfg.controlsYShortGapRatio != null
+            ? gameLandscapeCfg.controlsYShortGapRatio * h
+            : gameLandscapeCfg.controlsYShortGap;
+        const controlsYDefaultGap = gameLandscapeCfg.controlsYDefaultGapRatio != null
+            ? gameLandscapeCfg.controlsYDefaultGapRatio * h
+            : gameLandscapeCfg.controlsYDefaultGap;
         let controlsY = Math.min(
             controlsYCap,
-            contWinY + (isShortLandscapeGame ? gameLandscapeCfg.controlsYShortGap : gameLandscapeCfg.controlsYDefaultGap) + controlsYOffset
+            contWinY + (isShortLandscapeGame ? controlsYShortGap : controlsYDefaultGap) + controlsYOffset
         );
         const controlsBottomLimit = h - (isShortLandscapeGame ? gameLandscapeCfg.controlsBottomLimitShort : gameLandscapeCfg.controlsBottomLimitDefault);
         const controlsBottomReach = gameLandscapeCfg.controlsBottomReachBase * panelScale;
@@ -576,7 +589,11 @@ export function applyGameLayout({
             panelX = Phaser.Math.Clamp(panelX, panelMinXByBoard, Math.max(panelMinXByBoard, panelMaxXByHud));
         }
 
-        const panelGlobalYOffset = Number(gameLandscapeCfg.panelGlobalYOffset) || 0;
+        // Si el override define un ratio, se convierte a px proporcionales al alto actual.
+        // Fallback al valor en píxeles para compatibilidad con configs anteriores.
+        const panelGlobalYOffset = gameLandscapeCfg.panelGlobalYOffsetRatio != null
+            ? gameLandscapeCfg.panelGlobalYOffsetRatio * h
+            : (Number(gameLandscapeCfg.panelGlobalYOffset) || 0);
         if (panelGlobalYOffset !== 0) {
             contWinY += panelGlobalYOffset;
             controlsY += panelGlobalYOffset;
