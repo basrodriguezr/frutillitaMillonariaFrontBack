@@ -12,7 +12,7 @@ export default function RulesTab() {
         multiplica tu Apuesta.
       </p>
       <div className="info-row">
-        <span className="info-label">Jackpot Máximo</span>
+        <span className="info-label">Acumulado Máximo</span>
         <span className="info-val info-val-jackpot">Hasta x500</span>
       </div>
       <div className="info-row">

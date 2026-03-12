@@ -172,6 +172,7 @@ export function applyShopLayout({
             cardsShiftRightSafeInset: 6,
             landscapeCardsTopVisualGap: 8,
             landscapeCardsTopLabelOverflowFallback: 22,
+            landscapeCardsBottomLabelOverflowFallback: 22,
             totalWinPortraitFallbackOffset: 22,
             ticketRowYLocalBase: 20,
             maxCenterYLocalGap: 8,
@@ -478,7 +479,11 @@ export function applyShopLayout({
         const firstRowCard = !isPortrait && Array.isArray(scene.shopCards)
             ? scene.shopCards.find((card) => card?.gridRow === 0 && card?.ticketTag)
             : null;
+        const lastRowCard = !isPortrait && rows > 1 && Array.isArray(scene.shopCards)
+            ? scene.shopCards.find((card) => card?.gridRow === (rows - 1) && card?.ticketTag)
+            : null;
         let measuredTopLabelOverflowLocal = 0;
+        let measuredBottomLabelOverflowLocal = 0;
         if (firstRowCard?.ticketTag) {
             const tag = firstRowCard.ticketTag;
             const tagOriginY = Number.isFinite(tag.originY) ? tag.originY : 0.5;
@@ -486,8 +491,18 @@ export function applyShopLayout({
             const cardTopLocal = -(firstRowCard.cardH / 2);
             measuredTopLabelOverflowLocal = Math.max(0, cardTopLocal - tagTopLocal);
         }
+        if (lastRowCard?.ticketTag) {
+            const tag = lastRowCard.ticketTag;
+            const tagOriginY = Number.isFinite(tag.originY) ? tag.originY : 0.5;
+            const tagBottomLocal = tag.y + (tag.height * (1 - tagOriginY));
+            const cardBottomLocal = lastRowCard.cardH / 2;
+            measuredBottomLabelOverflowLocal = Math.max(0, tagBottomLocal - cardBottomLocal);
+        }
         const cardsTopLabelOverflowLocal = !isPortrait
             ? Math.max(shopCfg.landscapeCardsTopLabelOverflowFallback, measuredTopLabelOverflowLocal)
+            : 0;
+        const cardsBottomLabelOverflowLocal = !isPortrait && rows > 1
+            ? Math.max(shopCfg.landscapeCardsBottomLabelOverflowFallback, measuredBottomLabelOverflowLocal)
             : 0;
         const cardsStartY = flowY + (!isPortrait ? shopCfg.landscapeCardsTopVisualGap : 0);
         const cardScaleCap = portraitMobileLayout ? shopCfg.portraitMobileCardScaleCap : shopCfg.cardScaleCapDefault;
@@ -495,7 +510,7 @@ export function applyShopLayout({
         let cardScale = Math.min(maxW / gridW, cardScaleCap);
         cardScale = Math.min(cardScale * shopCardsScaleFactor, cardScaleCap);
         if (!isPortrait) {
-            cardScale = Math.min(cardScale, maxH / (gridH + cardsTopLabelOverflowLocal));
+            cardScale = Math.min(cardScale, maxH / (gridH + cardsTopLabelOverflowLocal + cardsBottomLabelOverflowLocal));
         }
         let cardsYWorld;
         if (portraitMobileLayout) {
