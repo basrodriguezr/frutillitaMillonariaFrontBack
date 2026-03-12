@@ -113,6 +113,12 @@ export function applyShopLayout({
             jackpotHeightRatioPortrait: 0.28,
             jackpotHeightRatioLandscapeShort: 0.20,
             jackpotHeightRatioLandscape: 0.28,
+            jackpotWidthRatioPortraitMobileMatch: 0.92,
+            jackpotWidthMaxPortraitMobileMatch: 760,
+            jackpotHeightRatioPortraitMobileMatch: 0.29,
+            jackpotWidthRatioPortraitTabletMatch: 0.86,
+            jackpotWidthMaxPortraitTabletMatch: 740,
+            jackpotHeightRatioPortraitTabletMatch: 0.26,
             mobileShopTopLiftBase: 18,
             mobileTopLeftTop: 84,
             mobileTopLeftBottom: 68,
@@ -175,8 +181,12 @@ export function applyShopLayout({
             shopLandscapeTitleHalfHeightBase: 26,
             shopLandscapeResultGapBelowTitle: 12,
             shopLandscapeResultGapToCards: 8,
+            mobileTopLeftScaleBoostPhone: 1.18,
+            mobileTopLeftScaleBoostTablet: 1.12,
             mobileJackpotWidthBoost: 1.12,
             mobileJackpotHeightBoost: 1.06,
+            mobileJackpotBoostPhone: 1.24,
+            mobileJackpotBoostTablet: 1.14,
             portraitMobileCardScaleCap: 1.46
         };
         const shopCfg = { ...shopBase, ...shopOverrides };
@@ -301,10 +311,22 @@ export function applyShopLayout({
                 scene.shopTitlePaquetes.setVisible(false);
             }
             const portraitFlowScale = Phaser.Math.Clamp(Math.min(contentWidth / 420, h / 900), 0.84, 1.08);
+            const topLeftScaleBoost = isMobilePortrait
+                ? shopCfg.mobileTopLeftScaleBoostPhone
+                : shopCfg.mobileTopLeftScaleBoostTablet;
+            const mobileJackpotWidthRatio = isMobilePortrait
+                ? shopCfg.jackpotWidthRatioPortraitMobileMatch
+                : shopCfg.jackpotWidthRatioPortraitTabletMatch;
+            const mobileJackpotWidthMax = isMobilePortrait
+                ? shopCfg.jackpotWidthMaxPortraitMobileMatch
+                : shopCfg.jackpotWidthMaxPortraitTabletMatch;
+            const mobileJackpotHeightRatio = isMobilePortrait
+                ? shopCfg.jackpotHeightRatioPortraitMobileMatch
+                : shopCfg.jackpotHeightRatioPortraitTabletMatch;
 
             // Estructura mobile solicitada:
             // 1) Opciones tickets, 2) Pozo, 3) Resultado, 4) Tarjetas, 5) Controles de apuesta abajo.
-            const topLeftPortraitScale = leftScale * portraitFlowScale;
+            const topLeftPortraitScale = leftScale * portraitFlowScale * topLeftScaleBoost;
             scene.shopTopLeft.setScale(topLeftPortraitScale);
             scene.shopTopLeft.setPosition(0, (safeTop + (42 * topLeftPortraitScale)) - centerY);
             const topLeftBounds = scene.shopTopLeft.getBounds();
@@ -313,11 +335,8 @@ export function applyShopLayout({
             const mobileShopJackpot = placeJackpot(
                 shopCenterX,
                 mobileJackpotTop,
-                Math.min(
-                    contentWidth * shopCfg.jackpotWidthPortraitRatio * shopCfg.mobileJackpotWidthBoost * portraitFlowScale,
-                    shopCfg.jackpotWidthPortraitMax * shopCfg.mobileJackpotWidthBoost * portraitFlowScale
-                ),
-                shopCfg.jackpotHeightRatioPortrait * shopCfg.mobileJackpotHeightBoost * portraitFlowScale
+                Math.min(w * mobileJackpotWidthRatio, mobileJackpotWidthMax),
+                mobileJackpotHeightRatio
             );
 
             const mobileShopResultScale = Phaser.Math.Clamp(

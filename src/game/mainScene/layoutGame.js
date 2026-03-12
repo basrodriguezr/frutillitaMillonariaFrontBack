@@ -44,6 +44,14 @@ export function applyGameLayout({
             jackpotWidthRatio: 0.78,
             jackpotWidthMax: 640,
             jackpotHeightRatio: 0.22,
+            jackpotTopMobile: 12,
+            jackpotTopTablet: 10,
+            jackpotWidthRatioMobile: 0.92,
+            jackpotWidthRatioTablet: 0.86,
+            jackpotWidthMaxMobile: 760,
+            jackpotWidthMaxTablet: 740,
+            jackpotHeightRatioMobile: 0.29,
+            jackpotHeightRatioTablet: 0.26,
             infoScaleCompactWidthDivisor: 760,
             infoScaleCompactMin: 0.54,
             infoScaleCompactMax: 0.72,
@@ -93,16 +101,33 @@ export function applyGameLayout({
             portraitWidthFactorMid: 0.99,
             portraitWidthFactorDefault: 0.96,
             replayTitleYOffset: 12,
+            replayTitleYOffsetMobile: 14,
+            replayTitleTargetFontPxMobile: 13,
+            replayTitleTargetFontPxTablet: 12,
+            replayTitleScaleMin: 1,
+            replayTitleScaleMax: 2.2,
             replayBtnLeftX: -130,
             replayBtnRightX: 130
         };
         const gamePortraitCfg = { ...gamePortraitBase, ...gamePortraitOverrides };
+        const jackpotTopPortrait = isMobilePortrait
+            ? gamePortraitCfg.jackpotTopMobile
+            : (isTabletPortrait ? gamePortraitCfg.jackpotTopTablet : gamePortraitCfg.jackpotTop);
+        const jackpotWidthRatioPortrait = isMobilePortrait
+            ? gamePortraitCfg.jackpotWidthRatioMobile
+            : (isTabletPortrait ? gamePortraitCfg.jackpotWidthRatioTablet : gamePortraitCfg.jackpotWidthRatio);
+        const jackpotWidthMaxPortrait = isMobilePortrait
+            ? gamePortraitCfg.jackpotWidthMaxMobile
+            : (isTabletPortrait ? gamePortraitCfg.jackpotWidthMaxTablet : gamePortraitCfg.jackpotWidthMax);
+        const jackpotHeightRatioPortrait = isMobilePortrait
+            ? gamePortraitCfg.jackpotHeightRatioMobile
+            : (isTabletPortrait ? gamePortraitCfg.jackpotHeightRatioTablet : gamePortraitCfg.jackpotHeightRatio);
         const gameJackpot = (scene.layerGame && scene.layerGame.visible)
             ? placeJackpot(
                 w / 2,
-                gamePortraitCfg.jackpotTop,
-                Math.min(w * gamePortraitCfg.jackpotWidthRatio, gamePortraitCfg.jackpotWidthMax),
-                gamePortraitCfg.jackpotHeightRatio
+                jackpotTopPortrait,
+                Math.min(w * jackpotWidthRatioPortrait, jackpotWidthMaxPortrait),
+                jackpotHeightRatioPortrait
             )
             : null;
 
@@ -188,7 +213,19 @@ export function applyGameLayout({
         scene.layerGame.setPosition(w / 2, gameCenterY);
         scene.layerGame.setScale(scaleGame);
 
-        scene.replayTitleBox.setPosition(0, -CONFIG_GAME.reelTotalHeight / 2 - gamePortraitCfg.replayTitleYOffset);
+        const replayTitleTargetFontPx = isMobilePortrait
+            ? gamePortraitCfg.replayTitleTargetFontPxMobile
+            : (isTabletPortrait ? gamePortraitCfg.replayTitleTargetFontPxTablet : 14);
+        const replayTitleScale = Phaser.Math.Clamp(
+            replayTitleTargetFontPx / Math.max(1, 14 * scaleGame),
+            gamePortraitCfg.replayTitleScaleMin,
+            gamePortraitCfg.replayTitleScaleMax
+        );
+        scene.replayTitleBox.setScale(replayTitleScale);
+        scene.replayTitleBox.setPosition(
+            0,
+            -CONFIG_GAME.reelTotalHeight / 2 - (isMobilePortrait ? gamePortraitCfg.replayTitleYOffsetMobile : gamePortraitCfg.replayTitleYOffset)
+        );
 
         const contWinGlobalYOffset = Number(gamePortraitCfg.contWinGlobalYOffset) || 0;
         const contWinRenderY = contWinY + contWinGlobalYOffset;
@@ -410,6 +447,7 @@ export function applyGameLayout({
         scene.layerGame.setPosition(gameX, gameY); 
         scene.layerGame.setScale(scaleGame);
 
+        scene.replayTitleBox.setScale(1);
         scene.replayTitleBox.setPosition(0, -CONFIG_GAME.reelTotalHeight / 2 - gameLandscapeCfg.replayTitleYOffset);
 
         const boardRightEdge = gameX + (gameWidthWorld / 2);

@@ -28,9 +28,12 @@ export function applyLobbyLayout({
         const lobbyOverrides = viewportOverrides.lobby || {};
         const lobbyBase = isPortrait
             ? {
-                jackpotTop: 8,
+                jackpotTop: 12,
                 jackpotWidth: Math.min(w * 0.86, 860),
+                jackpotTopMobile: 20,
+                jackpotWidthMobile: Math.min(w * 1.08, 980),
                 jackpotMaxHeightRatio: 0.38,
+                jackpotMaxHeightRatioMobile: 0.44,
                 titleGapFromJackpot: 26,
                 titleFallbackRatio: 0.24,
                 portraitButtonsStartGap: 200,
@@ -68,12 +71,22 @@ export function applyLobbyLayout({
                 bottomSafeMargin: 24
             };
         const lobbyCfg = { ...lobbyBase, ...lobbyOverrides };
+        const isMobilePortraitLobby = isPortrait && w <= 520;
+        const jackpotTop = isMobilePortraitLobby
+            ? (lobbyCfg.jackpotTopMobile ?? lobbyCfg.jackpotTop)
+            : lobbyCfg.jackpotTop;
+        const jackpotWidth = isMobilePortraitLobby
+            ? (lobbyCfg.jackpotWidthMobile ?? lobbyCfg.jackpotWidth)
+            : lobbyCfg.jackpotWidth;
+        const jackpotMaxHeightRatio = isMobilePortraitLobby
+            ? (lobbyCfg.jackpotMaxHeightRatioMobile ?? lobbyCfg.jackpotMaxHeightRatio)
+            : lobbyCfg.jackpotMaxHeightRatio;
 
         const lobbyJackpot = placeJackpot(
             w / 2,
-            lobbyCfg.jackpotTop,
-            lobbyCfg.jackpotWidth,
-            lobbyCfg.jackpotMaxHeightRatio
+            jackpotTop,
+            jackpotWidth,
+            jackpotMaxHeightRatio
         );
 
         if (isPortrait) {
@@ -93,7 +106,6 @@ export function applyLobbyLayout({
         const titleBottomWorld = scene.lobbyTitle.getBounds().bottom;
 
         if (isPortrait) {
-            const isMobilePortraitLobby = w <= 520;
             const portraitScaleBaseRatio = isMobilePortraitLobby
                 ? (lobbyCfg.portraitButtonScaleMobileWidthRatio ?? 0.80)
                 : lobbyCfg.portraitButtonScaleBaseWidthRatio;

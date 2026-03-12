@@ -21,11 +21,14 @@ export function buildShop() {
             const bg = this.add.graphics();
             const hit = this.add.zone(0,0,90,70).setInteractive({cursor:'pointer'}).setOrigin(0.5);
             const txt = this.add.text(0,-10, opt.toString(), { fontFamily: 'Luckiest Guy, Arial', fontSize: '34px', color: '#FFF' }).setOrigin(0.5);
-            const lbl = this.add.text(0, 18, "Tickets", { fontFamily: 'Arial', fontSize: '14px', color: '#FFF' }).setOrigin(0.5);
+            const lbl = this.add.text(0, 18, "Tickets", { fontFamily: 'Arial', fontSize: '15px', color: '#FFF' }).setOrigin(0.5);
             
             btn.add([bg, txt, lbl, hit]);
             btn.optValue = opt;
             btn.bgDraw = bg;
+            btn.hit = hit;
+            btn.txt = txt;
+            btn.lbl = lbl;
             
             hit.on('pointerdown', () => {
                 if (window.playButtonSfx) window.playButtonSfx();
@@ -326,6 +329,29 @@ export function updateShopUI() {
         this.lblShopBetInfo.setText(`APUESTA\n$${this.formatPoints(betVal)}`);
         this.lblShopTotal.setText(`COSTO TOTAL: $${this.formatPoints(betVal * this.shopQty)}`);
 
+        const isPortrait = this.scale.height > this.scale.width;
+        const viewportProfile = typeof this.getViewportScaleProfile === 'function'
+            ? this.getViewportScaleProfile(this.scale.width, this.scale.height)
+            : null;
+        const isMobilePortrait = isPortrait && (
+            viewportProfile
+                ? viewportProfile.profileKey === 'mobile-portrait'
+                : this.scale.width <= 520
+        );
+        const isTabletPortrait = isPortrait && (
+            viewportProfile
+                ? viewportProfile.profileKey === 'tablet-portrait'
+                : (this.scale.width > 520 && this.scale.width <= 1024)
+        );
+
+        const qtyBtnW = isMobilePortrait ? 98 : (isTabletPortrait ? 94 : 90);
+        const qtyBtnH = isMobilePortrait ? 76 : (isTabletPortrait ? 74 : 70);
+        const qtyNumFont = isMobilePortrait ? 36 : (isTabletPortrait ? 35 : 34);
+        const qtyLblFont = isMobilePortrait ? 16 : (isTabletPortrait ? 15 : 15);
+        const qtyNumY = isMobilePortrait ? -11 : -10;
+        const qtyLblY = isMobilePortrait ? 21 : 18;
+        const qtyRadius = isMobilePortrait ? 13 : 12;
+
         this.qtyButtons.forEach(btn => {
             btn.bgDraw.clear();
             if(btn.optValue === this.shopQty) {
@@ -333,8 +359,17 @@ export function updateShopUI() {
             } else {
                 btn.bgDraw.fillStyle(0x333333, 1); btn.bgDraw.lineStyle(2, 0xffffff, 0.5);
             }
-            btn.bgDraw.fillRoundedRect(-45, -35, 90, 70, 12);
-            btn.bgDraw.strokeRoundedRect(-45, -35, 90, 70, 12);
+            btn.bgDraw.fillRoundedRect(-(qtyBtnW / 2), -(qtyBtnH / 2), qtyBtnW, qtyBtnH, qtyRadius);
+            btn.bgDraw.strokeRoundedRect(-(qtyBtnW / 2), -(qtyBtnH / 2), qtyBtnW, qtyBtnH, qtyRadius);
+            if (btn.hit) btn.hit.setSize(qtyBtnW, qtyBtnH);
+            if (btn.txt) {
+                btn.txt.setFontSize(`${qtyNumFont}px`);
+                btn.txt.setY(qtyNumY);
+            }
+            if (btn.lbl) {
+                btn.lbl.setFontSize(`${qtyLblFont}px`);
+                btn.lbl.setY(qtyLblY);
+            }
         });
 
         if (this.currentShopQty !== this.shopQty) {
