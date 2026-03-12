@@ -5,7 +5,6 @@
  */
 export default function HudControls({
   rightHudVisibilityClass,
-  hudDockTop,
   activeTab,
   onOpenMenu,
   isMuted,
@@ -22,11 +21,7 @@ export default function HudControls({
         </button>
       </div>
 
-      <div
-        className={`pos-bottom-right hud-right ${rightHudVisibilityClass} ${
-          typeof hudDockTop === 'number' ? 'hud-docked' : ''
-        }`}
-      >
+      <div className={`pos-bottom-right hud-right ${rightHudVisibilityClass}`}>
         <button
           className={`hud-btn ${activeTab === 'history' ? 'active-hud' : ''}`}
           onClick={() => onOpenMenu('history')}

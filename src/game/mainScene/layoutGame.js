@@ -8,6 +8,8 @@ import { CONFIG_GAME } from './constants';
  * - `w` (number): Ancho disponible de la escena.
  * - `h` (number): Alto disponible de la escena.
  * - `isPortrait` (boolean): Indica si el layout está en orientación vertical.
+ * - `isMobilePortrait` (boolean): Indica si el dispositivo está en portrait móvil.
+ * - `isTabletPortrait` (boolean): Indica si el dispositivo está en portrait tablet.
  * - `thresholds` (object): Umbrales de corte para layout responsivo.
  * - `viewportOverrides` (object): Overrides de layout según viewport.
  * - `contentLeft` (number): Límite izquierdo del área de contenido.
@@ -23,6 +25,8 @@ export function applyGameLayout({
     w,
     h,
     isPortrait,
+    isMobilePortrait,
+    isTabletPortrait,
     thresholds,
     viewportOverrides,
     contentLeft,
@@ -77,6 +81,9 @@ export function applyGameLayout({
             controlsBottomReachBase: 182,
             minGapToControlsBase: 72,
             minGapToControlsScaleBase: 96,
+            controlsGapTargetVeryCompact: 122,
+            controlsGapTargetCompact: 132,
+            controlsGapTargetDefault: 146,
             contWinLiftBlendRatio: 0.55,
             gameTopFallbackRatio: 0.10,
             gameTopGap: 12,
@@ -158,6 +165,19 @@ export function applyGameLayout({
         }
         contWinY = Math.max(contWinMinY, contWinY);
 
+        // Solo en teléfonos portrait compactamos la distancia entre RESULTADO y controles.
+        // En tablets mantenemos separación mayor para evitar solapes.
+        if (isMobilePortrait) {
+            const targetControlsGapBase = isVeryCompactPortraitHud
+                ? gamePortraitCfg.controlsGapTargetVeryCompact
+                : (isCompactPortraitHud ? gamePortraitCfg.controlsGapTargetCompact : gamePortraitCfg.controlsGapTargetDefault);
+            const targetControlsGap = Math.max(96, targetControlsGapBase * controlsScale);
+            controlsY = Math.min(controlsY, contWinY + targetControlsGap);
+        } else if (isTabletPortrait) {
+            const tabletMinGap = Math.max(156, Math.round(170 * controlsScale));
+            controlsY = Math.max(controlsY, contWinY + tabletMinGap);
+        }
+
         const gameBottom = contWinY - gamePortraitCfg.gameBottomGapToWin;
         const availableGameHeight = Math.max(gamePortraitCfg.availableGameHeightMin, gameBottom - gameTop);
         const portraitWidthFactor = isMidPortraitHud ? gamePortraitCfg.portraitWidthFactorMid : gamePortraitCfg.portraitWidthFactorDefault;
@@ -194,6 +214,8 @@ export function applyGameLayout({
         const gameLandscapeBase = {
             forceNarrowLayout: false,
             panelGlobalYOffset: 0,
+            panelXOffset: 0,
+            panelXOffsetFactor: 0,
             areaFactorMid: 0.72,
             areaFactorDefault: 0.68,
             areaFactorReplayReduce: 0.06,
@@ -262,6 +284,7 @@ export function applyGameLayout({
             landscapeTitleScaleMin: 0.52,
             landscapeTitleScaleMax: 0.92,
             landscapeTitleYOffset: 34,
+            landscapeTitleGapFromJackpot: 10,
             landscapeTitleHalfHeightBase: 26,
             resultHalfHeightBase: 52,
             titleToResultGap: 12,
@@ -308,7 +331,9 @@ export function applyGameLayout({
             : gameAreaBaseFactor;
         const gameAreaWidth = contentWidth * gameAreaFactor;
         const panelAreaWidth = contentWidth - gameAreaWidth;
-        const panelX = contentLeft + gameAreaWidth + (panelAreaWidth * 0.50);
+        let panelX = contentLeft + gameAreaWidth + (panelAreaWidth * 0.50);
+        panelX += Number(gameLandscapeCfg.panelXOffset) || 0;
+        panelX += panelAreaWidth * (Number(gameLandscapeCfg.panelXOffsetFactor) || 0);
         const forceNarrowLandscapeGame = gameLandscapeCfg.forceNarrowLayout === true;
         const isWideLandscapeGame = !forceNarrowLandscapeGame && w >= thresholds.wideLandscapeMinW;
         const isNarrowLandscapeGame = forceNarrowLandscapeGame || (
@@ -438,8 +463,10 @@ export function applyGameLayout({
                 gameLandscapeCfg.landscapeTitleScaleMin,
                 gameLandscapeCfg.landscapeTitleScaleMax
             );
-            landscapeTitleY = gameJackpot.bottom + (gameLandscapeCfg.landscapeTitleYOffset * landscapeTitleScale);
             const titleHalfHeight = gameLandscapeCfg.landscapeTitleHalfHeightBase * landscapeTitleScale;
+            landscapeTitleY = gameJackpot.bottom
+                + titleHalfHeight
+                + (gameLandscapeCfg.landscapeTitleGapFromJackpot * landscapeTitleScale);
             const resultHalfHeightGame = gameLandscapeCfg.resultHalfHeightBase * contWinScale;
             const minContWinY = landscapeTitleY + titleHalfHeight + resultHalfHeightGame + gameLandscapeCfg.titleToResultGap;
             contWinY = Math.max(contWinY, minContWinY);
@@ -474,13 +501,47 @@ export function applyGameLayout({
         } else if ((controlsY + controlsBottomReach) > controlsBottomLimit) {
             controlsY -= (controlsY + controlsBottomReach) - controlsBottomLimit;
         }
+        /**
+         * Estima el borde izquierdo de la botonera derecha según reglas CSS vigentes.
+         * Parámetros:
+         * - `viewW` (number): Ancho de viewport actual.
+         * - `viewH` (number): Alto de viewport actual.
+         */
+        const getHudRightLeftEdge = (viewW, viewH) => {
+            let btnSize = Math.max(42, Math.min(54, viewW * 0.044)); // base clamp
+            let rightInset = Math.max(10, Math.min(24, viewW * 0.018)); // base clamp
+
+            if (viewH <= 520) {
+                btnSize = 34;
+                rightInset = 8;
+            }
+            if (viewW <= 1100 || viewH <= 760) {
+                btnSize = 42;
+                rightInset = 12;
+            }
+            if (viewW <= 900) {
+                btnSize = 38;
+            }
+            if (viewW >= 831 && viewW <= 900 && viewH <= 520) {
+                rightInset = 10;
+            }
+
+            return viewW - rightInset - btnSize;
+        };
+
+        const hudLeftEdge = getHudRightLeftEdge(w, h);
+        const panelMinXByBoard = boardRightEdge + safeGapToBoard;
+        const panelMaxXByHud = hudLeftEdge - safeGapToBoard;
+        if (panelMaxXByHud > panelMinXByBoard) {
+            panelX = (panelMinXByBoard + panelMaxXByHud) / 2;
+        } else {
+            panelX = Phaser.Math.Clamp(panelX, panelMinXByBoard, Math.max(panelMinXByBoard, panelMaxXByHud));
+        }
+
         const panelGlobalYOffset = Number(gameLandscapeCfg.panelGlobalYOffset) || 0;
         if (panelGlobalYOffset !== 0) {
             contWinY += panelGlobalYOffset;
             controlsY += panelGlobalYOffset;
-            if (landscapeTitleY !== null) {
-                landscapeTitleY += panelGlobalYOffset;
-            }
         }
         scene.uiElements.contWin.container.setPosition(panelX, contWinY); 
         scene.uiElements.contWin.container.setScale(contWinScale);

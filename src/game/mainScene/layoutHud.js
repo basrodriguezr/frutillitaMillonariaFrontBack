@@ -10,10 +10,8 @@ import { CONFIG_GAME, JACKPOT_SIZE_BOOST } from './constants';
  * - `isPortrait` (boolean): Indica si el layout está en orientación vertical.
  * - `isMobilePortrait` (boolean): Indica si el dispositivo está en portrait móvil.
  * - `isTabletPortrait` (boolean): Indica si el dispositivo está en portrait tablet.
- * - `thresholds` (object): Umbrales de corte para layout responsivo.
  * - `viewportProfile` (object|null): Perfil de viewport precalculado.
  * - `viewportOverrides` (object): Overrides de layout según viewport.
- * - `contentLeft` (number): Límite izquierdo del área de contenido.
  * - `contentRight` (number): Límite derecho del área de contenido.
  * - `contentWidth` (number): Ancho efectivo del área de contenido.
  * - `hasJackpot` (boolean): Indica si hay jackpot disponible para renderizar.
@@ -28,10 +26,8 @@ export function applyHudAndFallbackLayout({
     isPortrait,
     isMobilePortrait,
     isTabletPortrait,
-    thresholds,
     viewportProfile,
     viewportOverrides,
-    contentLeft,
     contentRight,
     contentWidth,
     hasJackpot,
@@ -58,10 +54,9 @@ export function applyHudAndFallbackLayout({
     };
     const hudCfg = { ...hudBase, ...hudOverrides };
     if (scene.lblTicket) {
-        const isShortLandscapeHud = !isPortrait && h <= thresholds.shortLandscapeGameMaxH;
         const ticketX = isPortrait
             ? (w - hudCfg.ticketXPortraitOffset)
-            : (isShortLandscapeHud ? (contentLeft + (contentWidth * hudCfg.ticketXLandscapeShortRatio)) : (contentRight - hudCfg.ticketXLandscapeRightOffset));
+            : (w - hudCfg.ticketXLandscapeRightOffset);
         scene.lblTicket.setPosition(ticketX, h - hudCfg.ticketBottomOffset);
     }
 

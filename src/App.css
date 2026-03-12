@@ -114,13 +114,15 @@ canvas {
 }
 .pos-bottom-right {
   position: absolute;
-  bottom: clamp(14px, 2vh, 26px);
+  top: 50%;
+  bottom: auto;
   right: clamp(10px, 1.8vw, 24px);
   display: flex;
   flex-direction: column;
   gap: 8px;
   pointer-events: auto;
   z-index: 9999;
+  transform: translateY(-50%);
 }
 .hud-right {
   transition: opacity 0.3s;
@@ -136,10 +138,10 @@ canvas {
   display: flex;
 }
 .pos-bottom-right.hud-docked {
-  top: var(--hud-dock-top);
+  top: 50%;
   bottom: auto;
-  right: 8px;
-  transform: none;
+  right: clamp(10px, 1.8vw, 24px);
+  transform: translateY(-50%);
 }
 
 .pos-top-right .hud-btn,
@@ -1082,10 +1084,10 @@ input:checked + .slider:before {
   }
 
   .pos-bottom-right {
-    top: auto;
-    bottom: 100px;
+    top: 50%;
+    bottom: auto;
     right: 8px;
-    transform: none;
+    transform: translateY(-50%);
     gap: 6px;
   }
 }
@@ -1099,8 +1101,10 @@ input:checked + .slider:before {
   }
 
   .pos-bottom-right {
-    bottom: 12px;
+    top: 50%;
+    bottom: auto;
     right: 12px;
+    transform: translateY(-50%);
   }
 }
 
@@ -1120,14 +1124,16 @@ input:checked + .slider:before {
 
 @media (min-width: 901px) {
   .pos-bottom-right {
-    bottom: 30%;
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
   }
 }
 
 /* iPad Mini portrait (768x1024): control dedicado botonera derecha */
 @media (orientation: portrait) and (min-width: 740px) and (max-width: 790px) and (min-height: 980px) and (max-height: 1060) {
   .pos-bottom-right:not(.hud-docked) {
-    top: 62%;
+    top: 50%;
     bottom: auto;
     right: 10px;
     transform: translateY(-50%);
@@ -1142,16 +1148,29 @@ input:checked + .slider:before {
 
 @media (min-width: 1400px) {
   .pos-bottom-right {
-    bottom: 25%;
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
   }
 }
 
 @media (orientation: landscape) and (min-width: 831px) and (max-width: 900px) {
   .pos-bottom-right {
-    top: auto;
-    bottom: 35%;
+    top: 50%;
+    bottom: auto;
     right: 10px;
-    transform: none;
+    transform: translateY(-50%);
     gap: 7px;
+  }
+}
+
+/* Mobile portrait: botonera derecha en mitad inferior (alineada hacia zona de resultado) */
+@media (orientation: portrait) and (max-width: 600px) {
+  .pos-bottom-right {
+    top: 66%;
+    bottom: auto;
+    right: 10px;
+    transform: translateY(-50%);
+    gap: 6px;
   }
 }

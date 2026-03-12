@@ -96,9 +96,10 @@ const VIEWPORT_SCALE_MODEL = {
             shop: 0.82,
             shopCards: 0.82,
             shopResult: 0.84,
-            gameBoard: 0.84,
-            gameInfo: 0.84,
-            gameControls: 0.82,
+            // En landscape móvil priorizamos tablero visible y reducimos panel derecho.
+            gameBoard: 1.0,
+            gameInfo: 0.72,
+            gameControls: 0.70,
             shopTitle: 0.86
         },
         thresholds: {
@@ -197,6 +198,40 @@ const VIEWPORT_SCALE_MODEL = {
 // Scopes disponibles en overrides: shared, lobby, shop, gamePortrait, gameLandscape, hud, fallbackJackpot.
 const VIEWPORT_RANGE_OVERRIDES = [
     {
+        id: 'mobile-landscape-bigger-board-smaller-controls',
+        match: {
+            orientation: 'landscape',
+            maxWidth: 960,
+            maxHeight: 500
+        },
+        overrides: {
+            gameLandscape: {
+                // Mantener tablero grande sin empujar tanto el panel derecho.
+                areaFactorMid: 0.74,
+                areaFactorDefault: 0.72,
+                widthScaleFactor: 1.04,
+                // Reducir el "peso" vertical del jackpot para liberar alto al tablero.
+                jackpotTopNarrow: 4,
+                jackpotHeightRatioNarrow: 0.20,
+                jackpotBoardGapMid: 4,
+                jackpotBoardGapDefault: 4,
+                jackpotBaseWidthNarrowFactor: 1.28,
+                jackpotBaseWidthNarrowMinFactor: 0.34,
+                // Mover panel de info/controles levemente hacia la izquierda y arriba,
+                // manteniendo proporcionalidad entre 844x390 y 667x375.
+                panelXOffset: 0,
+                panelXOffsetFactor: 0,
+                panelGlobalYOffset: -22,
+                controlsYShortGap: 96,
+                // Compactar controles derechos en landscape corto.
+                panelScaleVeryShortMax: 0.72,
+                panelScaleShortMax: 0.80,
+                panelScaleVeryShortMaxPost: 0.68,
+                panelScaleShortMaxPost: 0.74
+            }
+        }
+    },
+    {
         id: 'landscape-over-1200-force-narrow-game-layout',
         match: {
             orientation: 'landscape',
@@ -219,6 +254,28 @@ const VIEWPORT_RANGE_OVERRIDES = [
             gameLandscape: {
                 forceNarrowLayout: true,
                 panelGlobalYOffset: 50
+            }
+        }
+    },
+    {
+        id: 'tablet-portrait-compact-bigger-board',
+        match: {
+            orientation: 'portrait',
+            minWidth: 520,
+            maxWidth: 740,
+            minHeight: 700,
+            maxHeight: 980
+        },
+        overrides: {
+            shared: {
+                gameBoardScaleMin: 0.98,
+                gameBoardScaleMax: 1.08
+            },
+            gamePortrait: {
+                portraitWidthFactorDefault: 1.08,
+                portraitWidthFactorMid: 1.06,
+                gameTopGap: 6,
+                gameBottomGapToWin: 54
             }
         }
     },
