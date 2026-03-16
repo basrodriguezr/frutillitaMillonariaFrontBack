@@ -256,6 +256,27 @@ export function applyGameLayout({
         const gameLandscapeOverrides = viewportOverrides.gameLandscape || {};
         const gameLandscapeBase = {
             forceNarrowLayout: false,
+            desktopSplitAreaFactor: 0.54,
+            desktopJackpotTop: 16,
+            desktopJackpotWidthFactor: 1.8,
+            desktopJackpotWidthMax: 920,
+            desktopJackpotHeightRatio: 0.30,
+            desktopPanelWidthRatio: 0.24,
+            desktopPanelWidthMin: 220,
+            desktopPanelWidthMax: 460,
+            desktopPanelRightInsetRatio: 0.08,
+            desktopPanelRightInsetMin: 90,
+            desktopPanelRightInsetMax: 140,
+            desktopBoardOuterGapRatio: 0.04,
+            desktopBoardOuterGapMin: 24,
+            desktopBoardOuterGapMax: 88,
+            desktopBoardColumnGapRatio: 0.08,
+            desktopBoardColumnGapMin: 72,
+            desktopBoardColumnGapMax: 140,
+            desktopBoardTopMargin: 18,
+            desktopBoardBottomMargin: 18,
+            desktopBoardWidthFactor: 0.93,
+            desktopGameYRatio: 0.5,
             panelGlobalYOffset: 0,
             panelXOffset: 0,
             panelXOffsetFactor: 0,
@@ -282,9 +303,10 @@ export function applyGameLayout({
             verticalMargin: 18,
             jackpotBoardGapMid: 8,
             jackpotBoardGapDefault: 14,
-            replayTopReserve: 126,
+            replayTopReserve: 104,
+            replayTopSafeMargin: 18,
             maxGameHeightMin: 180,
-            replayWidthScaleCap: 0.85,
+            replayWidthScaleCap: 0.94,
             widthScaleFactor: 0.97,
             defaultGameXFactor: 0.50,
             defaultGameYReplayRatio: 0.55,
@@ -331,6 +353,7 @@ export function applyGameLayout({
             landscapeTitleHalfHeightBase: 26,
             resultHalfHeightBase: 52,
             titleToResultGap: 12,
+            desktopTitleToResultGap: 26,
             titleReplayGap: 12,
             controlsYOffsetWide: 24,
             controlsYOffsetMid: 44,
@@ -346,6 +369,9 @@ export function applyGameLayout({
             controlsBottomReachBase: 182,
             controlsMinYVeryShortGap: 72,
             controlsMinYShortGap: 84,
+            desktopControlsMinGapFromResult: 132,
+            desktopControlsBlendToBoardEdge: 0.5,
+            desktopBetBoxBottomOffset: -2,
             replayBtnShiftShort: 26,
             replayBtnShiftMid: 20,
             replayBtnShiftDefault: 14,
@@ -356,86 +382,232 @@ export function applyGameLayout({
             titleMinLeftGapFromBoard: 18
         };
         const gameLandscapeCfg = { ...gameLandscapeBase, ...gameLandscapeOverrides };
+        const useDesktopSplitLayout = true;
         const isMidLandscapeGame = w >= thresholds.midLandscapeMinW && w <= thresholds.midLandscapeMaxW;
         const isShortLandscapeGame = h <= thresholds.shortLandscapeGameMaxH;
         const isVeryShortLandscapeGame = h <= thresholds.veryShortLandscapeGameMaxH;
-        const isReplayLandscape = false;
+        const isReplayLandscape = !!scene.isReplayMode;
+        const isCompactSideLandscape = w <= 900;
+        const isNearCompactLandscape = w >= 901 && w <= 960;
+        const isWideSideLandscape = w >= thresholds.wideLandscapeMinW;
+        const sidePanelWidthRatio = isCompactSideLandscape ? 0.19 : (isWideSideLandscape ? 0.18 : 0.19);
+        const sidePanelWidthMin = isCompactSideLandscape ? 168 : (isWideSideLandscape ? 190 : 178);
+        const sidePanelWidthMax = isCompactSideLandscape ? 220 : (isWideSideLandscape ? 300 : 260);
+        const sidePanelRightInsetRatio = isCompactSideLandscape ? 0.024 : 0.04;
+        const sidePanelRightInsetMin = isCompactSideLandscape ? 28 : 44;
+        const sidePanelRightInsetMax = isCompactSideLandscape ? 52 : 72;
+        const sideBoardOuterGapRatio = isCompactSideLandscape ? 0.012 : 0.018;
+        const sideBoardOuterGapMin = isCompactSideLandscape ? 8 : 12;
+        const sideBoardOuterGapMax = isCompactSideLandscape ? 18 : 28;
+        const sideBoardColumnGapRatio = isCompactSideLandscape ? 0.024 : 0.03;
+        const sideBoardColumnGapMin = isCompactSideLandscape ? 18 : 24;
+        const sideBoardColumnGapMax = isCompactSideLandscape ? 34 : 42;
+        const sideBoardTopMargin = isCompactSideLandscape ? 10 : 18;
+        const sideBoardBottomMargin = isCompactSideLandscape ? 10 : 18;
+        const sideBoardWidthFactor = isCompactSideLandscape ? 1.04 : 1.02;
+        const sideJackpotWidthFactor = isCompactSideLandscape ? 1.78 : (isNearCompactLandscape ? 1.72 : 1.62);
+        const sideJackpotWidthFloorRatio = isCompactSideLandscape ? 0.26 : (isNearCompactLandscape ? 0.22 : 0.19);
+        const sideJackpotWidthMax = isCompactSideLandscape ? 360 : (isNearCompactLandscape ? 560 : 520);
+        const sideJackpotHeightRatio = isCompactSideLandscape ? 0.22 : (isNearCompactLandscape ? 0.20 : 0.18);
+        const sideReplayTopReserve = isCompactSideLandscape ? 88 : gameLandscapeCfg.replayTopReserve;
+        const sideReplayWidthScaleCap = isCompactSideLandscape ? 0.92 : gameLandscapeCfg.replayWidthScaleCap;
+        const getReplayReserveHeight = (targetScale = 1) => {
+            if (!scene.replayTitleBox) return 0;
+            const prevScaleX = scene.replayTitleBox.scaleX;
+            const prevScaleY = scene.replayTitleBox.scaleY;
+            scene.replayTitleBox.setScale(targetScale);
+            const bounds = scene.replayTitleBox.getBounds();
+            scene.replayTitleBox.setScale(prevScaleX, prevScaleY);
+            const halfHeight = Math.max(14, Math.ceil((bounds?.height || 28) / 2));
+            return gameLandscapeCfg.replayTitleYOffset + halfHeight + gameLandscapeCfg.replayTopSafeMargin;
+        };
+        /**
+         * Estima el borde izquierdo de la botonera derecha según reglas CSS vigentes.
+         * Parámetros:
+         * - `viewW` (number): Ancho de viewport actual.
+         * - `viewH` (number): Alto de viewport actual.
+         */
+        const getHudRightLeftEdge = (viewW, viewH) => {
+            let btnSize = Math.max(42, Math.min(54, viewW * 0.044));
+            let rightInset = Math.max(10, Math.min(24, viewW * 0.018));
+
+            if (viewH <= 520) {
+                btnSize = 34;
+                rightInset = 8;
+            }
+            if (viewW <= 1100 || viewH <= 760) {
+                btnSize = 42;
+                rightInset = 12;
+            }
+            if (viewW <= 900) {
+                btnSize = 38;
+            }
+            if (viewW >= 831 && viewW <= 900 && viewH <= 520) {
+                rightInset = 10;
+            }
+
+            return viewW - rightInset - btnSize;
+        };
+        const hudLeftEdge = getHudRightLeftEdge(w, h);
         const gameAreaBaseFactor = (
             isMidLandscapeGame
                 ? gameLandscapeCfg.areaFactorMid
                 : gameLandscapeCfg.areaFactorDefault
         ) * Phaser.Math.Clamp(gameBoardScaleFactor, 0.9, 1);
-        const gameAreaFactor = isReplayLandscape
+        const responsiveGameAreaFactor = isReplayLandscape
             ? Phaser.Math.Clamp(
                 gameAreaBaseFactor - gameLandscapeCfg.areaFactorReplayReduce,
                 gameLandscapeCfg.areaFactorReplayMin,
                 gameLandscapeCfg.areaFactorReplayMax
             )
             : gameAreaBaseFactor;
+        const gameAreaFactor = useDesktopSplitLayout
+            ? Phaser.Math.Clamp(gameLandscapeCfg.desktopSplitAreaFactor, 0.46, 0.54)
+            : responsiveGameAreaFactor;
         const gameAreaWidth = contentWidth * gameAreaFactor;
         const panelAreaWidth = contentWidth - gameAreaWidth;
-        let panelX = contentLeft + gameAreaWidth + (panelAreaWidth * 0.50);
+        const desktopPanelWidth = useDesktopSplitLayout
+            ? Phaser.Math.Clamp(
+                contentWidth * sidePanelWidthRatio,
+                sidePanelWidthMin,
+                sidePanelWidthMax
+            )
+            : panelAreaWidth;
+        const desktopPanelRightInset = useDesktopSplitLayout
+            ? Phaser.Math.Clamp(
+                contentWidth * sidePanelRightInsetRatio,
+                sidePanelRightInsetMin,
+                sidePanelRightInsetMax
+            )
+            : 0;
+        const desktopBoardOuterGap = useDesktopSplitLayout
+            ? Phaser.Math.Clamp(
+                contentWidth * sideBoardOuterGapRatio,
+                sideBoardOuterGapMin,
+                sideBoardOuterGapMax
+            )
+            : 0;
+        const desktopBoardColumnGap = useDesktopSplitLayout
+            ? Phaser.Math.Clamp(
+                contentWidth * sideBoardColumnGapRatio,
+                sideBoardColumnGapMin,
+                sideBoardColumnGapMax
+            )
+            : 0;
+        const desktopPanelRight = useDesktopSplitLayout
+            ? (contentRight - desktopPanelRightInset)
+            : contentRight;
+        const desktopPanelLeft = useDesktopSplitLayout
+            ? (desktopPanelRight - desktopPanelWidth)
+            : (contentLeft + gameAreaWidth);
+        const effectivePanelWidth = useDesktopSplitLayout ? desktopPanelWidth : panelAreaWidth;
+        let panelX = useDesktopSplitLayout
+            ? (desktopPanelLeft + (desktopPanelWidth * 0.50))
+            : (contentLeft + gameAreaWidth + (panelAreaWidth * 0.50));
         panelX += Number(gameLandscapeCfg.panelXOffset) || 0;
-        panelX += panelAreaWidth * (Number(gameLandscapeCfg.panelXOffsetFactor) || 0);
-        const forceNarrowLandscapeGame = gameLandscapeCfg.forceNarrowLayout === true;
-        const isWideLandscapeGame = !forceNarrowLandscapeGame && w >= thresholds.wideLandscapeMinW;
-        const isNarrowLandscapeGame = forceNarrowLandscapeGame || (
+        panelX += effectivePanelWidth * (Number(gameLandscapeCfg.panelXOffsetFactor) || 0);
+        const forceNarrowLandscapeGame = !useDesktopSplitLayout && gameLandscapeCfg.forceNarrowLayout === true;
+        const isWideLandscapeGame = useDesktopSplitLayout || (!forceNarrowLandscapeGame && w >= thresholds.wideLandscapeMinW);
+        const isNarrowLandscapeGame = !useDesktopSplitLayout && (
+            forceNarrowLandscapeGame || (
             !isWideLandscapeGame && (
             w < gameLandscapeCfg.narrowGamePanelWidthThreshold
-            || panelAreaWidth < gameLandscapeCfg.narrowGamePanelMinWidth
+            || effectivePanelWidth < gameLandscapeCfg.narrowGamePanelMinWidth
             )
-        );
-        const jackpotBaseWidthGame = isNarrowLandscapeGame
+        ));
+        const jackpotBaseWidthGame = useDesktopSplitLayout
             ? Math.min(
                 Math.max(
-                    panelAreaWidth * gameLandscapeCfg.jackpotBaseWidthNarrowFactor,
+                    effectivePanelWidth * sideJackpotWidthFactor,
+                    w * sideJackpotWidthFloorRatio
+                ),
+                sideJackpotWidthMax
+            )
+            : (isNarrowLandscapeGame
+            ? Math.min(
+                Math.max(
+                    effectivePanelWidth * gameLandscapeCfg.jackpotBaseWidthNarrowFactor,
                     contentWidth * gameLandscapeCfg.jackpotBaseWidthNarrowMinFactor
                 ),
                 gameLandscapeCfg.jackpotBaseWidthNarrowMax
             )
             : Math.min(
-                panelAreaWidth * (isWideLandscapeGame ? gameLandscapeCfg.jackpotBaseWidthWideFactor : gameLandscapeCfg.jackpotBaseWidthDefaultFactor),
+                effectivePanelWidth * (isWideLandscapeGame ? gameLandscapeCfg.jackpotBaseWidthWideFactor : gameLandscapeCfg.jackpotBaseWidthDefaultFactor),
                 isWideLandscapeGame ? gameLandscapeCfg.jackpotBaseWidthWideMax : gameLandscapeCfg.jackpotBaseWidthDefaultMax
-            );
-        const jackpotXGame = isNarrowLandscapeGame
+            ));
+        const jackpotXGame = useDesktopSplitLayout
+            ? panelX
+            : (isNarrowLandscapeGame
             ? (w * 0.5)
-            : (panelX + (isWideLandscapeGame ? gameLandscapeCfg.jackpotXWideOffset : 0));
-        const gameJackpot = (scene.layerGame && scene.layerGame.visible)
+            : (panelX + (isWideLandscapeGame ? gameLandscapeCfg.jackpotXWideOffset : 0)));
+        let gameJackpot = (scene.layerGame && scene.layerGame.visible)
             ? placeJackpot(
                 jackpotXGame,
-                isNarrowLandscapeGame ? gameLandscapeCfg.jackpotTopNarrow : gameLandscapeCfg.jackpotTopWide,
+                useDesktopSplitLayout
+                    ? gameLandscapeCfg.desktopJackpotTop
+                    : (isNarrowLandscapeGame ? gameLandscapeCfg.jackpotTopNarrow : gameLandscapeCfg.jackpotTopWide),
                 jackpotBaseWidthGame,
-                isNarrowLandscapeGame
+                useDesktopSplitLayout
+                    ? sideJackpotHeightRatio
+                    : (isNarrowLandscapeGame
                     ? gameLandscapeCfg.jackpotHeightRatioNarrow
-                    : (isWideLandscapeGame ? gameLandscapeCfg.jackpotHeightRatioWide : gameLandscapeCfg.jackpotHeightRatioDefault)
+                    : (isWideLandscapeGame ? gameLandscapeCfg.jackpotHeightRatioWide : gameLandscapeCfg.jackpotHeightRatioDefault))
             )
             : null;
 
         const gameVerticalMargin = gameLandscapeCfg.verticalMargin;
         const jackpotBoardGap = isMidLandscapeGame ? gameLandscapeCfg.jackpotBoardGapMid : gameLandscapeCfg.jackpotBoardGapDefault;
-        const jackpotClearTop = gameJackpot ? (gameJackpot.bottom + jackpotBoardGap) : gameVerticalMargin;
-        const replayTopReserve = isReplayLandscape ? gameLandscapeCfg.replayTopReserve : 0;
-        const boardTopReserve = (isWideLandscapeGame ? gameVerticalMargin : jackpotClearTop) + replayTopReserve;
+        const jackpotClearTop = (gameJackpot && !useDesktopSplitLayout) ? (gameJackpot.bottom + jackpotBoardGap) : gameVerticalMargin;
+        const replayTopReserve = isReplayLandscape
+            ? Math.max(sideReplayTopReserve, getReplayReserveHeight(1))
+            : 0;
+        const boardTopReserve = ((isWideLandscapeGame || useDesktopSplitLayout) ? gameVerticalMargin : jackpotClearTop) + replayTopReserve;
         const maxGameHeight = Math.max(gameLandscapeCfg.maxGameHeightMin, h - gameVerticalMargin - boardTopReserve);
-        const replayWidthScaleCap = isReplayLandscape ? gameLandscapeCfg.replayWidthScaleCap : 1;
-        const scaleGameBase = Math.min(
-            (gameAreaWidth * gameLandscapeCfg.widthScaleFactor * replayWidthScaleCap) / CONFIG_GAME.reelTotalWidth,
-            maxGameHeight / CONFIG_GAME.reelTotalHeight
+        const replayWidthScaleCap = isReplayLandscape ? sideReplayWidthScaleCap : 1;
+        const desktopBoardLeft = contentLeft + desktopBoardOuterGap;
+        const desktopBoardRight = desktopPanelLeft - desktopBoardColumnGap;
+        const desktopBoardWidth = Math.max(220, desktopBoardRight - desktopBoardLeft);
+        const desktopBoardHeight = Math.max(
+            gameLandscapeCfg.maxGameHeightMin,
+            h - sideBoardTopMargin - sideBoardBottomMargin - replayTopReserve
         );
+        const scaleGameBase = useDesktopSplitLayout
+            ? Math.min(
+                (desktopBoardWidth * sideBoardWidthFactor * replayWidthScaleCap) / CONFIG_GAME.reelTotalWidth,
+                desktopBoardHeight / CONFIG_GAME.reelTotalHeight
+            )
+            : Math.min(
+                (gameAreaWidth * gameLandscapeCfg.widthScaleFactor * replayWidthScaleCap) / CONFIG_GAME.reelTotalWidth,
+                maxGameHeight / CONFIG_GAME.reelTotalHeight
+            );
         const scaleGame = Math.min(scaleGameBase, scaleGameBase * gameBoardScaleFactor);
         const gameWidthWorld = CONFIG_GAME.reelTotalWidth * scaleGame;
         const gameHeightWorld = CONFIG_GAME.reelTotalHeight * scaleGame;
-        const gameXMin = contentLeft + (gameWidthWorld / 2);
-        const gameXMax = contentLeft + gameAreaWidth - (gameWidthWorld / 2);
-        const defaultGameX = contentLeft + (gameAreaWidth * gameLandscapeCfg.defaultGameXFactor);
+        const gameXMin = useDesktopSplitLayout
+            ? desktopBoardLeft + (gameWidthWorld / 2)
+            : contentLeft + (gameWidthWorld / 2);
+        const gameXMax = useDesktopSplitLayout
+            ? desktopBoardRight - (gameWidthWorld / 2)
+            : contentLeft + gameAreaWidth - (gameWidthWorld / 2);
+        const defaultGameX = useDesktopSplitLayout
+            ? desktopBoardLeft + (desktopBoardWidth / 2)
+            : contentLeft + (gameAreaWidth * gameLandscapeCfg.defaultGameXFactor);
         let gameX = Phaser.Math.Clamp(defaultGameX, gameXMin, Math.max(gameXMin, gameXMax));
-        const defaultGameY = h * (isReplayLandscape ? gameLandscapeCfg.defaultGameYReplayRatio : gameLandscapeCfg.defaultGameYRatio);
-        const gameYMin = boardTopReserve + (gameHeightWorld / 2);
-        const gameYMax = h - gameVerticalMargin - (gameHeightWorld / 2);
+        const defaultGameY = h * (
+            useDesktopSplitLayout
+                ? gameLandscapeCfg.desktopGameYRatio
+                : (isReplayLandscape ? gameLandscapeCfg.defaultGameYReplayRatio : gameLandscapeCfg.defaultGameYRatio)
+        );
+        const gameYMin = useDesktopSplitLayout
+            ? sideBoardTopMargin + replayTopReserve + (gameHeightWorld / 2)
+            : boardTopReserve + (gameHeightWorld / 2);
+        const gameYMax = useDesktopSplitLayout
+            ? h - sideBoardBottomMargin - (gameHeightWorld / 2)
+            : h - gameVerticalMargin - (gameHeightWorld / 2);
         const gameY = Phaser.Math.Clamp(defaultGameY, gameYMin, Math.max(gameYMin, gameYMax));
 
         const basePanelScale = Phaser.Math.Clamp(
-            panelAreaWidth / gameLandscapeCfg.panelScaleDivisor,
+            effectivePanelWidth / gameLandscapeCfg.panelScaleDivisor,
             isShortLandscapeGame ? gameLandscapeCfg.panelScaleShortMin : gameLandscapeCfg.panelScaleDefaultMin,
             isShortLandscapeGame
                 ? (isVeryShortLandscapeGame ? gameLandscapeCfg.panelScaleVeryShortMax : gameLandscapeCfg.panelScaleShortMax)
@@ -445,7 +617,7 @@ export function applyGameLayout({
         const safeGapToBoard = isReplayLandscape ? gameLandscapeCfg.safeGapToBoardReplay : gameLandscapeCfg.safeGapToBoard;
         const desiredBoardRightMax = panelX - (controlsHalfReach * basePanelScale) - safeGapToBoard;
         const currentBoardRight = gameX + (gameWidthWorld / 2);
-        if (currentBoardRight > desiredBoardRightMax) {
+        if (!useDesktopSplitLayout && currentBoardRight > desiredBoardRightMax) {
             const shiftLeft = currentBoardRight - desiredBoardRightMax;
             gameX = Phaser.Math.Clamp(gameX - shiftLeft, gameXMin, Math.max(gameXMin, gameXMax));
         }
@@ -454,7 +626,10 @@ export function applyGameLayout({
         scene.layerGame.setScale(scaleGame);
 
         scene.replayTitleBox.setScale(1);
-        scene.replayTitleBox.setPosition(0, -CONFIG_GAME.reelTotalHeight / 2 - gameLandscapeCfg.replayTitleYOffset);
+        scene.replayTitleBox.setPosition(
+            0,
+            -CONFIG_GAME.reelTotalHeight / 2 - gameLandscapeCfg.replayTitleYOffset + (isReplayLandscape ? 16 : 0)
+        );
 
         const boardRightEdge = gameX + (gameWidthWorld / 2);
         const availableLeftSpan = Math.max(0, panelX - boardRightEdge - safeGapToBoard);
@@ -476,7 +651,7 @@ export function applyGameLayout({
         );
         const contWinScaleBase = Phaser.Math.Clamp(
             Math.min(
-                Phaser.Math.Clamp(panelAreaWidth / gameLandscapeCfg.contWinScaleDivisor, gameLandscapeCfg.contWinScaleBaseMin, gameLandscapeCfg.contWinScaleBaseMax),
+                Phaser.Math.Clamp(effectivePanelWidth / gameLandscapeCfg.contWinScaleDivisor, gameLandscapeCfg.contWinScaleBaseMin, gameLandscapeCfg.contWinScaleBaseMax),
                 fitResultScale
             ),
             isShortLandscapeGame ? gameLandscapeCfg.contWinScaleShortMin : gameLandscapeCfg.contWinScaleDefaultMin,
@@ -508,11 +683,14 @@ export function applyGameLayout({
                 gameLandscapeCfg.landscapeTitleScaleMax
             );
             const titleHalfHeight = gameLandscapeCfg.landscapeTitleHalfHeightBase * landscapeTitleScale;
+            const titleToResultGap = useDesktopSplitLayout
+                ? gameLandscapeCfg.desktopTitleToResultGap
+                : gameLandscapeCfg.titleToResultGap;
             landscapeTitleY = gameJackpot.bottom
                 + titleHalfHeight
                 + (gameLandscapeCfg.landscapeTitleGapFromJackpot * landscapeTitleScale);
             const resultHalfHeightGame = gameLandscapeCfg.resultHalfHeightBase * contWinScale;
-            const minContWinY = landscapeTitleY + titleHalfHeight + resultHalfHeightGame + gameLandscapeCfg.titleToResultGap;
+            const minContWinY = landscapeTitleY + titleHalfHeight + resultHalfHeightGame + titleToResultGap;
             contWinY = Math.max(contWinY, minContWinY);
             if (isReplayLandscape) {
                 landscapeTitleY = contWinY - resultHalfHeightGame - titleHalfHeight - gameLandscapeCfg.titleReplayGap;
@@ -539,6 +717,7 @@ export function applyGameLayout({
             controlsYCap,
             contWinY + (isShortLandscapeGame ? controlsYShortGap : controlsYDefaultGap) + controlsYOffset
         );
+        const preDesktopControlsY = controlsY;
         const controlsBottomLimit = h - (isShortLandscapeGame ? gameLandscapeCfg.controlsBottomLimitShort : gameLandscapeCfg.controlsBottomLimitDefault);
         const controlsBottomReach = gameLandscapeCfg.controlsBottomReachBase * panelScale;
         const controlsMaxY = controlsBottomLimit - controlsBottomReach;
@@ -552,41 +731,39 @@ export function applyGameLayout({
         } else if ((controlsY + controlsBottomReach) > controlsBottomLimit) {
             controlsY -= (controlsY + controlsBottomReach) - controlsBottomLimit;
         }
-        /**
-         * Estima el borde izquierdo de la botonera derecha según reglas CSS vigentes.
-         * Parámetros:
-         * - `viewW` (number): Ancho de viewport actual.
-         * - `viewH` (number): Alto de viewport actual.
-         */
-        const getHudRightLeftEdge = (viewW, viewH) => {
-            let btnSize = Math.max(42, Math.min(54, viewW * 0.044)); // base clamp
-            let rightInset = Math.max(10, Math.min(24, viewW * 0.018)); // base clamp
-
-            if (viewH <= 520) {
-                btnSize = 34;
-                rightInset = 8;
+        if (useDesktopSplitLayout) {
+            const boardBottomEdge = gameY + (gameHeightWorld / 2);
+            const betBoxBottomFromGroupCenter = 180 * panelScale;
+            const targetControlsY = boardBottomEdge - betBoxBottomFromGroupCenter + gameLandscapeCfg.desktopBetBoxBottomOffset;
+            const controlsMinYDesktop = contWinY + gameLandscapeCfg.desktopControlsMinGapFromResult;
+            const blendedControlsY = Phaser.Math.Linear(
+                preDesktopControlsY,
+                targetControlsY,
+                gameLandscapeCfg.desktopControlsBlendToBoardEdge
+            );
+            if (controlsMaxY <= controlsMinYDesktop) {
+                controlsY = controlsMaxY;
+            } else {
+                controlsY = Phaser.Math.Clamp(blendedControlsY, controlsMinYDesktop, controlsMaxY);
             }
-            if (viewW <= 1100 || viewH <= 760) {
-                btnSize = 42;
-                rightInset = 12;
-            }
-            if (viewW <= 900) {
-                btnSize = 38;
-            }
-            if (viewW >= 831 && viewW <= 900 && viewH <= 520) {
-                rightInset = 10;
-            }
-
-            return viewW - rightInset - btnSize;
-        };
-
-        const hudLeftEdge = getHudRightLeftEdge(w, h);
+        }
         const panelMinXByBoard = boardRightEdge + safeGapToBoard;
         const panelMaxXByHud = hudLeftEdge - safeGapToBoard;
-        if (panelMaxXByHud > panelMinXByBoard) {
+        if (useDesktopSplitLayout) {
+            const targetDesktopPanelX = desktopPanelLeft + (effectivePanelWidth * 0.50);
+            panelX = Phaser.Math.Clamp(targetDesktopPanelX, panelMinXByBoard, Math.max(panelMinXByBoard, panelMaxXByHud));
+        } else if (panelMaxXByHud > panelMinXByBoard) {
             panelX = (panelMinXByBoard + panelMaxXByHud) / 2;
         } else {
             panelX = Phaser.Math.Clamp(panelX, panelMinXByBoard, Math.max(panelMinXByBoard, panelMaxXByHud));
+        }
+        if (useDesktopSplitLayout && scene.layerGame && scene.layerGame.visible) {
+            gameJackpot = placeJackpot(
+                panelX,
+                gameLandscapeCfg.desktopJackpotTop,
+                jackpotBaseWidthGame,
+                sideJackpotHeightRatio
+            );
         }
 
         // Si el override define un ratio, se convierte a px proporcionales al alto actual.

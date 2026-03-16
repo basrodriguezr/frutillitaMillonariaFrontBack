@@ -278,6 +278,7 @@ export function applyResponsiveLayout(size) {
             isMobilePortrait,
             isTabletPortrait,
             thresholds,
+            viewportProfile,
             viewportOverrides,
             contentLeft,
             contentRight,
