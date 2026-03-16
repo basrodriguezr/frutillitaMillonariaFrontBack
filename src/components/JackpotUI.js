@@ -316,14 +316,14 @@ export class JackpotUI {
         if (!this.amountTxt || !this.image) return;
 
         const baseFontSize = 40;
-        const legacyFinalFontSize = Phaser.Math.Clamp(targetWidth * 0.058, 24, 56);
-        const desiredFinalFontSize = Phaser.Math.Clamp(targetWidth * 0.064, 24, 60);
-        const strokeThickness = Math.round(Phaser.Math.Clamp(desiredFinalFontSize * 0.12, 4, 8));
+        const legacyFinalFontSize = Phaser.Math.Clamp(targetWidth * 0.064, 26, 64);
+        const desiredFinalFontSize = Phaser.Math.Clamp(targetWidth * 0.076, 28, 76);
+        const strokeThickness = Math.round(Phaser.Math.Clamp(desiredFinalFontSize * 0.12, 4, 10));
         const legacyScale = Phaser.Math.Clamp(legacyFinalFontSize / Math.max(baseFontSize * scale, 0.01), 0.65, 1.35);
-        let localTextScale = Phaser.Math.Clamp(desiredFinalFontSize / Math.max(baseFontSize * scale, 0.01), 0.65, 1.45);
+        let localTextScale = Phaser.Math.Clamp(desiredFinalFontSize / Math.max(baseFontSize * scale, 0.01), 0.7, 1.8);
         const textX = Math.round(this.image.width * this.valueXRatio);
         const textY = Math.round(this.image.height * this.valueYRatio);
-        const maxFinalTextWidth = targetWidth * 0.62;
+        const maxFinalTextWidth = targetWidth * 0.72;
 
         this.amountTxt
             .setPosition(textX, textY)

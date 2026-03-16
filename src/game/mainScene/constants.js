@@ -367,6 +367,32 @@ const VIEWPORT_RANGE_OVERRIDES = [
         }
     },
     {
+        id: 'square-tablet-portrait-bigger-board-smaller-jackpot',
+        match: {
+            orientation: 'portrait',
+            minWidth: 768,
+            maxWidth: 980,
+            minHeight: 820,
+            maxHeight: 980
+        },
+        overrides: {
+            shared: {
+                gameBoardScaleMin: 1.0,
+                gameBoardScaleMax: 1.10
+            },
+            gamePortrait: {
+                jackpotTopTablet: 6,
+                jackpotWidthRatioTablet: 0.72,
+                jackpotWidthMaxTablet: 620,
+                jackpotHeightRatioTablet: 0.18,
+                portraitWidthFactorMid: 1.12,
+                portraitWidthFactorDefault: 1.08,
+                gameTopGap: 6,
+                gameBottomGapToWin: 44
+            }
+        }
+    },
+    {
         id: 'ipad-pro-portrait-lobby-button-spacing',
         match: {
             orientation: 'portrait',
