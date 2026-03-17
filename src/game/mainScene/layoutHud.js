@@ -43,7 +43,7 @@ export function applyHudAndFallbackLayout({
         ticketXLandscapeShortRatio: 0.64,
         ticketXLandscapeRightOffset: 10,
         ticketBottomOffset: 15,
-        dockButtonSize: 38,
+        dockButtonSize: 44,
         dockGap: 6,
         dockCount: 5,
         dockBottomMargin: 10,

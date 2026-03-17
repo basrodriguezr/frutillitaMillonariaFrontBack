@@ -11,8 +11,13 @@ export default function HudControls({
   onToggleSound,
   onGoHome,
   isFullscreen,
-  onToggleFullscreen
+  onToggleFullscreen,
+  hudDockTop
 }) {
+  const dockStyle = typeof hudDockTop === 'number'
+    ? { top: `${hudDockTop}px`, transform: 'none' }
+    : {};
+
   return (
     <>
       <div className={`pos-top-right hud-right ${rightHudVisibilityClass}`}>
@@ -21,7 +26,7 @@ export default function HudControls({
         </button>
       </div>
 
-      <div className={`pos-bottom-right hud-right ${rightHudVisibilityClass}`}>
+      <div className={`pos-bottom-right hud-right ${rightHudVisibilityClass}`} style={dockStyle}>
         <button
           className={`hud-btn ${activeTab === 'history' ? 'active-hud' : ''}`}
           onClick={() => onOpenMenu('history')}

@@ -18,6 +18,11 @@
   --modal-btn-no: #333539;
   --modal-btn-hover-yes: #5c5f64;
   --modal-btn-hover-no: #26282c;
+  /* Safe area insets — requiere viewport-fit=cover en el meta tag */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
 }
 
 body,
@@ -48,7 +53,7 @@ canvas {
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -64,8 +69,8 @@ canvas {
 }
 
 .hud-btn {
-  width: clamp(42px, 4.4vw, 54px);
-  height: clamp(42px, 4.4vw, 54px);
+  width: clamp(44px, 4.4vw, 54px);
+  height: clamp(44px, 4.4vw, 54px);
   background: var(--panel-color);
   border: 1px solid var(--border-color);
   border-radius: 12px;
@@ -90,8 +95,8 @@ canvas {
 
 .pos-top-left {
   position: absolute;
-  top: 20px;
-  left: 20px;
+  top: calc(20px + var(--safe-top));
+  left: calc(20px + var(--safe-left));
   pointer-events: none;
 }
 .pos-top-left .hud-btn {
@@ -105,8 +110,8 @@ canvas {
 }
 .pos-top-right {
   position: absolute;
-  top: clamp(10px, 2vh, 20px);
-  right: clamp(10px, 1.8vw, 24px);
+  top: calc(clamp(10px, 2vh, 20px) + var(--safe-top));
+  right: calc(clamp(10px, 1.8vw, 24px) + var(--safe-right));
   display: flex;
   gap: 10px;
   pointer-events: auto;
@@ -116,7 +121,7 @@ canvas {
   position: absolute;
   top: 50%;
   bottom: auto;
-  right: clamp(10px, 1.8vw, 24px);
+  right: calc(clamp(10px, 1.8vw, 24px) + var(--safe-right));
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -140,7 +145,7 @@ canvas {
 .pos-bottom-right.hud-docked {
   top: 50%;
   bottom: auto;
-  right: clamp(10px, 1.8vw, 24px);
+  right: calc(clamp(10px, 1.8vw, 24px) + var(--safe-right));
   transform: translateY(-50%);
 }
 
@@ -1021,7 +1026,7 @@ input:checked + .slider:before {
   .pos-bottom-right {
     top: 50%;
     bottom: auto;
-    right: 8px;
+    right: calc(2px + var(--safe-right));
     transform: translateY(-50%);
     gap: 6px;
   }
@@ -1072,21 +1077,21 @@ input:checked + .slider:before {
 
 @media (max-height: 520px) and (orientation: landscape) {
   .hud-btn {
-    width: 34px;
-    height: 34px;
-    font-size: 16px;
-    border-radius: 9px;
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+    border-radius: 10px;
   }
 
   .pos-top-right {
-    top: 8px;
-    right: 8px;
+    top: calc(8px + var(--safe-top));
+    right: calc(8px + var(--safe-right));
   }
 
   .pos-bottom-right {
     top: 50%;
     bottom: auto;
-    right: 8px;
+    right: calc(8px + var(--safe-right));
     transform: translateY(-50%);
     gap: 6px;
   }
@@ -1094,8 +1099,8 @@ input:checked + .slider:before {
 
 @media (max-width: 1100px), (max-height: 760px) {
   .hud-btn {
-    width: 42px;
-    height: 42px;
+    width: 44px;
+    height: 44px;
     font-size: 20px;
     border-radius: 10px;
   }
@@ -1103,54 +1108,38 @@ input:checked + .slider:before {
   .pos-bottom-right {
     top: 50%;
     bottom: auto;
-    right: 12px;
+    right: calc(12px + var(--safe-right));
     transform: translateY(-50%);
   }
 }
 
 @media (max-width: 900px) {
   .hud-btn {
-    width: 38px;
-    height: 38px;
-    font-size: 18px;
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
     border-radius: 10px;
   }
 
   .pos-top-right {
-    top: 10px;
-    right: 10px;
-  }
-}
-
-@media (min-width: 901px) {
-  .pos-bottom-right {
-    top: 50%;
-    bottom: auto;
-    transform: translateY(-50%);
+    top: calc(10px + var(--safe-top));
+    right: calc(10px + var(--safe-right));
   }
 }
 
 /* iPad Mini portrait (768x1024): control dedicado botonera derecha */
-@media (orientation: portrait) and (min-width: 740px) and (max-width: 790px) and (min-height: 980px) and (max-height: 1060) {
+@media (orientation: portrait) and (min-width: 740px) and (max-width: 790px) and (min-height: 980px) and (max-height: 1060px) {
   .pos-bottom-right:not(.hud-docked) {
     top: 50%;
     bottom: auto;
-    right: 10px;
+    right: calc(10px + var(--safe-right));
     transform: translateY(-50%);
     gap: 8px;
   }
 
   .pos-top-right {
-    top: 12px;
-    right: 10px;
-  }
-}
-
-@media (min-width: 1400px) {
-  .pos-bottom-right {
-    top: 50%;
-    bottom: auto;
-    transform: translateY(-50%);
+    top: calc(12px + var(--safe-top));
+    right: calc(10px + var(--safe-right));
   }
 }
 
@@ -1158,7 +1147,7 @@ input:checked + .slider:before {
   .pos-bottom-right {
     top: 50%;
     bottom: auto;
-    right: 10px;
+    right: calc(10px + var(--safe-right));
     transform: translateY(-50%);
     gap: 7px;
   }
@@ -1169,7 +1158,7 @@ input:checked + .slider:before {
   .pos-bottom-right {
     top: 66%;
     bottom: auto;
-    right: 10px;
+    right: calc(4px + var(--safe-right));
     transform: translateY(-50%);
     gap: 6px;
   }

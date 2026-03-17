@@ -251,7 +251,8 @@ export function endSpin(totalWin, winGroups) {
 
             if (this.isManualMode) {
                 this.lblLoseFloat.setVisible(false);
-                this.lblTotalWinFloat.setText("¡SIN PREMIO!");
+                this.lblTotalWinFloat.setFontSize('45px');
+                this.lblTotalWinFloat.setText("¡INTENTALO NUEVAMENTE!");
                 this.lblTotalWinFloat.setColor('#FFFFFF');
                 this.lblTotalWinFloat.setVisible(true);
                 this.lblTotalWinFloat.setScale(0);
@@ -263,7 +264,7 @@ export function endSpin(totalWin, winGroups) {
                 if (!this.isReplayMode && window.playLoseSfx) {
                     window.playLoseSfx();
                 }
-                this.uiElements.contWin.val.setFontSize('22px'); this.uiElements.contWin.val.setText("TICKET SIN PREMIO"); this.uiElements.contWin.val.setColor('#FFFFFF');
+                this.uiElements.contWin.val.setFontSize('22px'); this.uiElements.contWin.val.setText("INTENTALO NUEVAMENTE"); this.uiElements.contWin.val.setColor('#FFFFFF');
                 this.lblLoseFloat.setVisible(true); this.lblLoseFloat.setScale(0); 
                 for(let c=0; c<5; c++) {
                     for(let r=0; r<5; r++) { this.tweens.add({ targets: this.symbolsMatrix[c][r], alpha: 0.5, duration: 300, ease: 'Sine.easeOut' }); }
@@ -315,6 +316,7 @@ export function playSequentialWins(winGroups) {
                 }
 
                 for(let c=0; c<5; c++) { for(let r=0; r<5; r++) { this.symbolsMatrix[c][r].setAlpha(0.3); } }
+                this.lblTotalWinFloat.setFontSize('85px');
                 this.lblTotalWinFloat.setText("¡GANASTE!\n$" + this.formatPoints(this.accumulatedWin));
                 this.lblTotalWinFloat.setColor('#FFD700');
                 this.lblTotalWinFloat.setVisible(true); this.lblTotalWinFloat.setScale(0);
